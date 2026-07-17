@@ -1,0 +1,34 @@
+{
+  "name": "needlewhile",
+  "displayName": "Needlewhile / 扎会儿",
+  "version": "0.3.0",
+  "buildDate": "2026-07-17",
+  "runtime": {
+    "node": ">=18",
+    "browserPreference": [
+      "Google Chrome",
+      "Microsoft Edge",
+      "system default"
+    ]
+  },
+  "targets": [
+    "Codex plugin",
+    "Claude Code plugin"
+  ],
+  "testedAndRecommended": {
+    "codex": "tested on 0.145.0-alpha.18",
+    "claudeCode": "2.1.196 or newer recommended; schema validated, CLI not present on build machine"
+  },
+  "entrypoints": {
+    "skill": "skills/needlewhile/SKILL.md",
+    "codexManifest": ".codex-plugin/plugin.json",
+    "claudeManifest": ".claude-plugin/plugin.json",
+    "demo": "npm run demo",
+    "validate": "npm run validate"
+  },
+  "privacy": {
+    "remoteNetwork": false,
+    "globalKeyboardCapture": false,
+    "analytics": false
+  }
+}

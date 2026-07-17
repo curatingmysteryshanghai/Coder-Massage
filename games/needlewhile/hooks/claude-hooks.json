@@ -1,0 +1,80 @@
+{
+  "description": "Start Needlewhile for each Claude Code turn and clean up on every supported ending.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs",
+              "start"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs",
+              "heartbeat"
+            ],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs",
+              "stop"
+            ],
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs",
+              "error"
+            ],
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs",
+              "cleanup"
+            ],
+            "timeout": 1
+          }
+        ]
+      }
+    ]
+  }
+}

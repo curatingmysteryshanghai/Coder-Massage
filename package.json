@@ -1,0 +1,18 @@
+{
+  "name": "jieya",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A private collection of tactile decompression minigames for AI waiting time.",
+  "scripts": {
+    "demo": "npm --prefix games/needlewhile run demo",
+    "stop": "npm --prefix games/needlewhile run stop",
+    "status": "npm --prefix games/needlewhile run status",
+    "shutdown": "npm --prefix games/needlewhile run shutdown",
+    "validate": "node scripts/validate.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

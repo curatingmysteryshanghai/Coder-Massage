@@ -1,0 +1,14 @@
+.DS_Store
+Thumbs.db
+*.swp
+node_modules/
+*.log
+*.zip
+*.zip.sha256
+.media/
+.env
+.env.local
+.env.*
+!.env.example
+server.json
+browser-profile/

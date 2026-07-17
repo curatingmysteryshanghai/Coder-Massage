@@ -1,0 +1,25 @@
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local runtime and package artifacts
+node_modules/
+*.log
+*.zip
+*.zip.sha256
+.media/
+
+# Local secrets if future games introduce configuration
+.env
+.env.local
+.env.*
+!.env.example
+
+# Rejected and intermediate art studies kept only in the working folder
+/design/concept-v1-realistic.png
+/design/source/
+/skills/needlewhile/app/public/assets/anime-background.png
+/skills/needlewhile/app/public/assets/felt-background.jpg
+/skills/needlewhile/app/public/assets/wool-ball-anime.png
+/skills/needlewhile/app/public/assets/wool-ball.png

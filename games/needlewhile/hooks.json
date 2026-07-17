@@ -1,0 +1,43 @@
+{
+  "description": "Start Needlewhile when a Codex turn begins and stop it when the turn ends.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" start",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" start",
+            "timeout": 5,
+            "statusMessage": "Waking Needlewhile"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" heartbeat",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" heartbeat",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" stop",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" stop",
+            "timeout": 5,
+            "statusMessage": "Letting the pins rest"
+          }
+        ]
+      }
+    ]
+  }
+}

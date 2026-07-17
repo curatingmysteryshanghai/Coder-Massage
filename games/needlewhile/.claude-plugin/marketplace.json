@@ -1,0 +1,14 @@
+{
+  "name": "needlewhile-local",
+  "owner": {
+    "name": "Magic Fan"
+  },
+  "plugins": [
+    {
+      "name": "needlewhile",
+      "source": "./",
+      "description": "A tactile waiting toy for Claude Code turns.",
+      "version": "0.3.0"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Needlewhile · 扎会儿</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-phase="idle">
+    <main
+      class="toy"
+      id="toy"
+      tabindex="0"
+      role="application"
+      aria-label="扎会儿毛线球等待小游戏"
+      aria-describedby="input-hint"
+    >
+      <div class="status" aria-live="polite">
+        <span id="status-text">WAITING FOR AI</span>
+        <span class="pin-count" id="pin-count">000</span>
+      </div>
+
+      <button class="sound-toggle" id="sound-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
+        <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
+          <path d="M15.1 8.6c1.7 1.7 1.7 5.1 0 6.8M17.7 6c3.2 3.3 3.2 8.7 0 12" />
+        </svg>
+        <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
+          <path d="m15.5 9 5 5m0-5-5 5" />
+        </svg>
+        <span id="sound-label">SOUND ON</span>
+      </button>
+
+      <section class="ball-stage" aria-label="毛线球">
+        <img
+          class="wool-ball"
+          id="wool-ball"
+          src="/assets/wool-ball-teal.png?v=4"
+          alt="一团蓝绿色与奶油色交织的插画风毛线"
+          draggable="false"
+        />
+      </section>
+
+      <div class="pin-layer" id="pin-layer" aria-hidden="true"></div>
+
+      <p class="input-hint" id="input-hint">ANY KEY / ANY CLICK</p>
+      <p class="sr-only" id="live-count" aria-live="polite"></p>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

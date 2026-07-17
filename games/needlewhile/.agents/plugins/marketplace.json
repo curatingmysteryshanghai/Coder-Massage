@@ -1,0 +1,20 @@
+{
+  "name": "needlewhile-local",
+  "interface": {
+    "displayName": "Needlewhile Local"
+  },
+  "plugins": [
+    {
+      "name": "needlewhile",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
