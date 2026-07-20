@@ -1,6 +1,6 @@
 # Needlewhile / 扎会儿 · Ver.0.2
 
-An opt-in local waiting game for AI agent sessions, and Game 01 in the private [Jieya](../../README.md) collection.
+An opt-in local waiting game for AI agent sessions, and Game 01 in the early-access [Jieya](../../README.md) collection.
 
 ![Needlewhile Ver.0.2](./design/preview.png)
 
@@ -23,7 +23,7 @@ The upper-left readout shows the sanitized task label, active client, elapsed ti
 
 ## Quick demo
 
-Requirements: Node.js 18+ and a local default browser.
+Requirements: Node.js 18+ and a local default browser. Run these commands from `games/needlewhile`:
 
 ```bash
 npm run validate
@@ -41,7 +41,9 @@ npm run shutdown
 
 ## Installation
 
-The GitHub repository is currently private, so each installer needs explicit repository access and an authenticated clone or ZIP download first. Node.js 18+ and a `codex` command available on `PATH` are required for Codex installation; no `npm install` or build step is needed.
+Use the root [human and AI-assistant installation guide](../../README.md#installation-responsibilities) as the canonical runbook. It covers public and authenticated private downloads, ZIP installs, owner-only Hook approval, exit codes, verification, restart, first-run testing, upgrades, Windows, and Claude Code.
+
+Node.js 18+ and a `codex` command on `PATH` are required for Codex installation. No `npm install` or build step is needed.
 
 From the repository root on macOS or Linux:
 
@@ -61,11 +63,11 @@ The root marketplace catalogs install this plugin as `needlewhile@jieya`.
 
 Keep the cloned or extracted repository at a stable path. Codex caches the installed plugin, while the configured local marketplace continues to use that folder for diagnostics and updates.
 
-The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in chat does not open Hook authorization. Go to **Settings → Plugins → Needlewhile → Review → Trust all**, inspect the commands, and confirm that all three Needlewhile hooks show **Trusted**.
+The installer may return exit `2` with `NEEDLEWHILE_STATUS=pending`. This is the expected owner handoff: the plugin is installed and enabled. In Codex Desktop, the owner goes to **Settings → Plugins → Needlewhile → Review → Trust all**, inspects the commands, and confirms that `UserPromptSubmit`, `PostToolUse`, and `Stop` show **Trusted**.
 
 In Codex CLI, use `/hooks` with the leading slash and review the same three commands. Installing or updating can change an exact command hash, so a previously trusted Hook may require review again. Never edit or bypass Hook trust.
 
-Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`; the plugin files are installed and only user authorization remains. After trusting all three Hooks, verify from the repository root with `sh ./install.sh --verify` or `.\install.ps1 -Target verify`. When verification reports ready, fully quit and reopen Codex once so existing projects reload the new Hook, skill, and MCP process, then start a fresh top-level task. The inline Portal appears once; its click opens a normal browser tab, and the page Portal enters the game. Automatic browser launch is intentionally disabled.
+An AI assistant may run the installer and verification, but it must never approve Hook trust for the owner or edit trust records. After owner approval, verify from the repository root with `sh ./install.sh --verify` or `.\install.ps1 -Target verify`. When verification exits `0`, fully quit and reopen Codex once. In Codex Desktop, a new top-level task can show the inline Portal; CLI and IDE surfaces may use an explicit normal-browser flow instead.
 
 ## Lifecycle protocol
 
@@ -95,4 +97,4 @@ See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`P
 
 ## License
 
-MIT. The bundled production artwork was created for Needlewhile and is included with this private development release.
+MIT. The bundled production artwork was created for Needlewhile and is included with this early-access development release.

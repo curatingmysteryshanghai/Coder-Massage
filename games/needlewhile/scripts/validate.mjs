@@ -257,7 +257,7 @@ try {
     }
   }
   const readme = read("README.md").toString("utf8");
-  assert(readme.includes("currently private"), "README does not disclose private GitHub access");
+  assert(readme.includes("human and AI-assistant installation guide"), "README does not route to the canonical install guide");
   assert(readme.includes("sh ./install.sh --codex"), "README does not document ZIP-safe shell install");
   assert(readme.includes("sh ./install.sh --verify"), "README does not document post-trust verification");
   pass("standalone installers expose ZIP-safe install, explicit Hook authorization, and post-trust verification");

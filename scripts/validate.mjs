@@ -68,9 +68,12 @@ assert(releaseManifest.installation?.shell === "sh ./install.sh --codex", "relea
 assert(releaseManifest.installation?.verifyShell === "sh ./install.sh --verify", "release manifest shell verification command mismatch");
 assert(releaseManifest.installation?.codexPluginId === "needlewhile@jieya", "release manifest Codex plugin ID mismatch");
 assert(releaseManifest.installation?.manualRequirements?.length === 2, "release manifest must list Hook trust and restart requirements");
-assert(rootReadme.includes("currently private"), "README must disclose the private GitHub access requirement");
+assert(rootReadme.includes("When the repository is public"), "README must document public GitHub download");
+assert(rootReadme.includes("When it is private"), "README must document authenticated private GitHub access");
 assert(rootReadme.includes("sh ./install.sh --codex"), "README must document the ZIP-safe shell install command");
 assert(rootReadme.includes("sh ./install.sh --verify"), "README must document the post-trust verification command");
+assert(rootReadme.includes("Automation boundary"), "README must document the owner-only Hook trust boundary");
+assert(rootReadme.includes("Upgrade an existing Codex installation"), "README must document upgrades");
 if (process.platform !== "win32") {
   for (const path of [join(ROOT, "install.sh"), join(GAME_DIR, "install.sh")]) {
     assert((statSync(path).mode & 0o111) !== 0, `${path} must remain executable`);
