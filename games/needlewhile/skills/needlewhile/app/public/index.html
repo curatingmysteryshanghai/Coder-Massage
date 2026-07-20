@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <meta name="color-scheme" content="light" />
-    <title>Needlewhile · 扎会儿 · Ver. 0.2</title>
+    <title>Needlewhile · Ver. 0.2</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body data-phase="idle" data-entry="portal">
@@ -13,42 +13,42 @@
       id="toy"
       tabindex="-1"
       role="application"
-      aria-label="扎会儿毛线球等待小游戏"
+      aria-label="Needlewhile yarn-ball waiting game"
       aria-describedby="input-hint"
     >
-      <section class="task-status" aria-live="polite" aria-label="当前任务状态">
+      <section class="task-status" aria-live="polite" aria-label="Current task status">
         <p class="eyeline">CURRENT TASK</p>
-        <h1 class="task-title" id="task-title">等待智能体任务</h1>
+        <h1 class="task-title" id="task-title">Waiting for an agent task</h1>
         <dl class="task-facts">
           <div>
-            <dt>状态</dt>
-            <dd id="phase-label">待机</dd>
+            <dt>Phase</dt>
+            <dd id="phase-label">Idle</dd>
           </div>
           <div>
-            <dt>用时</dt>
+            <dt>Elapsed</dt>
             <dd id="elapsed-label">00:00</dd>
           </div>
           <div>
-            <dt>步骤</dt>
+            <dt>Steps</dt>
             <dd id="tool-label">00</dd>
           </div>
           <div>
-            <dt>扎针</dt>
+            <dt>Pins</dt>
             <dd id="pin-count">000</dd>
           </div>
         </dl>
       </section>
 
-      <p class="version-mark" aria-label="版本 0.2">NEEDLEWHILE / VER. 0.2</p>
+      <p class="version-mark" aria-label="Version 0.2">NEEDLEWHILE / VER. 0.2</p>
 
       <div class="pin-layer pin-layer--back" id="pin-layer-back" aria-hidden="true"></div>
 
-      <section class="ball-stage" aria-label="毛线球">
+      <section class="ball-stage" aria-label="Yarn ball">
         <img
           class="wool-ball"
           id="wool-ball"
           src="/assets/wool-ball-teal.png?v=5"
-          alt="一团蓝绿色与奶油色交织的细腻毛线"
+          alt="A finely tangled teal and cream yarn ball"
           draggable="false"
         />
         <div class="fiber-detail" aria-hidden="true"></div>
@@ -69,23 +69,23 @@
             <span class="portal-spark portal-spark--four"></span>
           </span>
           <span class="portal-copy">
-            <strong id="portal-title">打开时空门</strong>
-            <span id="portal-subtitle">点一下，再进入扎会儿</span>
+            <strong id="portal-title">Open time portal</strong>
+            <span id="portal-subtitle">Click to enter Needlewhile</span>
           </span>
         </button>
       </section>
 
       <section class="completion" id="completion" aria-live="assertive" aria-hidden="true">
         <p class="completion-kicker">TANGLE COMPLETE</p>
-        <h2>这一轮完成了</h2>
-        <p id="completion-copy">让毛线和思绪一起停一下。</p>
-        <p class="countdown">页面将在 <strong id="close-countdown">08</strong> 秒后关闭</p>
-        <button class="close-now" id="close-now" type="button">现在关闭</button>
+        <h2>This round is complete</h2>
+        <p id="completion-copy">Let the yarn and your thoughts rest for a moment.</p>
+        <p class="countdown">Closing in <strong id="close-countdown">08</strong> seconds</p>
+        <button class="close-now" id="close-now" type="button">Close now</button>
         <span class="ending-vortex" aria-hidden="true"></span>
       </section>
 
       <div class="utility-controls">
-        <button class="icon-control sound-toggle" id="sound-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
+        <button class="icon-control sound-toggle" id="sound-toggle" type="button" aria-label="Turn sound off" aria-pressed="false">
           <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
             <path d="M15.1 8.6c1.7 1.7 1.7 5.1 0 6.8M17.7 6c3.2 3.3 3.2 8.7 0 12" />
@@ -94,18 +94,18 @@
             <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
             <path d="m15.5 9 5 5m0-5-5 5" />
           </svg>
-          <span id="sound-label">声音</span>
+          <span id="sound-label">Sound</span>
         </button>
 
-        <button class="icon-control palette-toggle" id="palette-toggle" type="button" aria-label="随机更换毛线球和背景配色">
+        <button class="icon-control palette-toggle" id="palette-toggle" type="button" aria-label="Choose a random yarn and background palette">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 7h10l-2.5-2.5M20 17H10l2.5 2.5M14 7l-2.5 2.5M10 17l2.5-2.5" />
           </svg>
-          <span>换配色</span>
+          <span>Palette</span>
         </button>
       </div>
 
-      <p class="input-hint" id="input-hint">点击时空门进入 · ESC 保留给浏览器</p>
+      <p class="input-hint" id="input-hint">Open the time portal to enter · ESC stays with the browser</p>
       <p class="sr-only" id="live-count" aria-live="polite"></p>
     </main>
     <script src="/app.js" type="module"></script>

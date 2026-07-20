@@ -6,10 +6,10 @@ Result: passed for the local game surface
 
 - Ver.0.2 generated concept: `design/concept-ver-0.2.png`
 - Desktop Portal: `design/preview-portal-ver-0.2.png`
-- Desktop game, 36 needles: `design/preview-game-ver-0.2.png`
+- Desktop game, 42 needles: `design/preview-game-ver-0.2.png`
 - Desktop ending: `design/preview-ending-ver-0.2.png`
 - Mobile Portal: `design/preview-mobile-portal-ver-0.2.png`
-- Mobile game, 14 needles: `design/preview-mobile-game-ver-0.2.png`
+- Mobile game, 30 needles: `design/preview-mobile-game-ver-0.2.png`
 - README preview: `design/preview.png` (same verified desktop game state)
 - Render method: Codex in-app Browser against the real loopback lifecycle server
 - Desktop QA viewport: 1440 × 900
@@ -22,20 +22,21 @@ Result: passed for the local game surface
 2. **Layout:** task information stays in the upper-left, the version remains upper-right/low-left on mobile, the yarn remains dominant and centered, and utility controls stay in the lower-left.
 3. **Task detail:** the implementation expands the concept with a concrete sanitized task label, client-aware status, elapsed time, tool-step count, and local pin count. A two-line cap preserves detail without covering the game.
 4. **Yarn refinement:** the transparent illustrated yarn asset is retained for clean edges. A masked two-direction fine-fiber layer adds subtle strand texture; it follows palette filters and avoids a baked checkerboard or opaque rectangle.
-5. **Needle depth and distribution:** sampling reaches the center/front face and the outer rim. Separate foreground/background layers create depth; the desktop evidence contains both layers and multiple near-center targets.
-6. **Palette variation:** the background and yarn filter change as a paired palette. Browser QA changed teal/yellow to mint/purple and confirmed both computed background color and yarn filter changed.
+5. **Needle depth and distribution:** sampling reaches the center/front face and the outer rim. Front-facing needles use a spherical projection: center needles shorten and recede, outer needles lengthen, contact marks clarify the landing point, and foreground/background occlusion preserves depth.
+6. **Palette variation:** the background and yarn filter change as a paired palette. Pointer activation returns focus to the toy so keyboard play continues; keyboard activation preserves focus on the button.
 7. **Ending:** the completed state dims and contracts the yarn/pin field, shows a pixel vortex, reports the task as complete, runs the countdown, and attempts a tab close. A normal-tab fallback explains how to close when the browser refuses script-driven closing.
 8. **Typography:** the original monospaced, sparse, flat-print direction remains. Controls use square borders and step timing rather than rounded app-card styling.
 
 ## Functional checks
 
 - Portal button resolved uniquely and changed the page from `data-entry="portal"` to the focused game state.
-- `Escape` kept the pin count at `000`; Space, left-click, and right-click advanced it to `003`.
-- Dense placement reached 41 local pins: 23 front-zone, 18 rim-zone, 6 background-layer, 35 foreground-layer, and 6 within a normalized 0.16 center radius. Minimum observed normalized distance was about 0.047.
-- The palette button changed the body from `rgb(242, 207, 98)` to `rgb(191, 224, 201)` and applied a yarn hue/filter transform.
-- A lifecycle `stop` changed the interface to `Codex 已完成`, exposed the completion panel, ran the countdown to `00`, and showed the normal-tab close fallback after `window.close()` was rejected.
+- `Escape` kept the pin count at `000`; Space advanced it to `001`, pointer activation of Palette returned focus to the toy, and ArrowRight advanced it to `002`.
+- The desktop evidence contains 42 local pins: 17 front-zone, 25 rim-zone, 5 near-head-on approaches, and 42 visible contact marks. The mobile evidence contains 30 pins, including 2 near-head-on approaches and 30 contact marks.
+- Pointer activation changed the palette to peach and returned focus to the toy. Keyboard activation with Enter kept focus on `palette-toggle`.
+- A lifecycle `stop` changed the interface to `Task complete`, exposed the completion panel, ran the countdown, and kept the elapsed clock frozen at `completedAt`.
 - A new lifecycle `start` cleanly cancelled the previous ending and restored an active mobile Portal.
-- A real Playwright active→active replacement cleared `003` old pins to `000`, switched the task title, and kept `Escape` at `000` with no console errors.
+- The same controller state and `startedAt` were observed before Portal entry, in the full game, and after completion; elapsed time already accrued before the click and continued without reset.
+- All static game copy, control labels, status text, fallback copy, document language, and ARIA names are English.
 - No browser console warnings or errors were recorded.
 
 ## Responsive and accessibility checks
@@ -55,6 +56,9 @@ Result: passed for the local game surface
 - **P1 · mixed concurrent status:** title, timer, tool count, and client now come from one focused run. The global round revision advances only on a new start, so concurrent heartbeats can change focus without repeatedly clearing the yarn.
 - **P2 · center dead zone:** the old radius excluded the ball's front center. Ver.0.2 uses a dedicated front-face distribution and independent approach angles.
 - **P2 · task-title truncation:** the first pass used a single 390 px line. It now uses up to 520 px and a two-line clamp on desktop while preserving the mobile layout.
+- **P2 · finite Portal loop:** the supplied GIF's Netscape loop count was `5`, which produced six passes. It is now `0`, the GIF convention for infinite looping.
+- **P2 · palette focus loss:** pointer activation left focus on the Palette button, so the next Space press re-triggered the control instead of adding a needle. Pointer activation now restores toy focus while keyboard activation keeps normal button semantics.
+- **P2 · head-on needle perspective:** front-center needles previously read as equal-length flat overlays. Spherical projection, distance-based length, contact compression, and stronger center occlusion now make the approach angle visually coherent.
 
 ## Remaining host-specific deviations
 
@@ -63,13 +67,13 @@ Result: passed for the local game surface
 - WorkBuddy's right-side local Web preview and a Coze custom Chat SDK host are documented adapter paths; neither client runtime is installed on this Mac for end-to-end UI testing.
 - Normal browsers may reject `window.close()` for a user-opened tab. The countdown and ending remain visible and switch to a clear manual-close message.
 
-## Inline MCP Portal mini redesign · runtime 0.4.5
+## Inline MCP Portal mini redesign · runtime 0.4.6
 
 ### Source and evidence
 
 - Approved source: the user-supplied eight-frame `return-portal-entrance.gif`.
-- Production asset: `adapters/openai-app/assets/portal-icon.gif` (32 × 42 native animation, eight 80ms frames, six total passes under five seconds, embedded as a transparent data URI and displayed proportionally at 34px high).
-- Earlier exact resource capture: `design/preview-inline-portal-0.4.2.png`; runtime 0.4.5 keeps the recolored supplied animation and routes its click through the app-only local launch tool.
+- Production asset: `adapters/openai-app/assets/portal-icon.gif` (32 × 42 native animation, eight 80ms frames, infinite Netscape loop, embedded as a transparent data URI and displayed proportionally at 34px high).
+- Earlier exact resource capture: `design/preview-inline-portal-0.4.2.png`; runtime 0.4.6 keeps the recolored supplied animation looping and routes its click through the app-only local launch tool.
 - Earlier source-versus-browser comparison: `design/inline-portal-reference-comparison-0.4.2.jpg`.
 - Render path: the MCP adapter's real `resources/read` HTML, including its embedded GIF data URI, served locally and inspected with the Codex in-app Browser.
 - QA surface: a temporary 200 × 120 preview viewport; measured component dimensions are fixed independently at 44 × 44.
@@ -84,7 +88,7 @@ Result: passed for the local game surface
 
 ### Functional and accessibility checks
 
-- The ready DOM exposes exactly one link named `打开 Needlewhile 时空门`; the decorative image has empty alt text.
+- The ready DOM exposes exactly one link named `Open the Needlewhile time portal`; the decorative image has empty alt text.
 - Both the body and interactive surface measure 44 × 44, with transparent backgrounds and zero border width. The image displays proportionally at 34px high and reports `image-rendering: pixelated`.
 - The widget emitted `ui/notifications/size-changed` and kept the compatibility intrinsic-height notification.
 - The current Codex host is asked to auto-expand the compact widget in its own chronological tool row. Codex exposes no plugin slot inside the host-owned `已处理` divider, so exact horizontal adjacency remains a host feature request.

@@ -1,6 +1,6 @@
 {
   "name": "@jieya/needlewhile-openai-portal",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "description": "Zero-dependency stdio MCP Apps adapter for the tiny borderless Needlewhile pixel-art portal.",

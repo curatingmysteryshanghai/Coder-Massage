@@ -5,7 +5,11 @@ This directory provides a zero-dependency, JSONL-over-stdio MCP server for hosts
 - `show_needlewhile_portal`: use after an explicit user request, or exactly once when Needlewhile's trusted top-level `UserPromptSubmit` hook asks Codex to mount the inline Portal.
 - `open_needlewhile_game`: hidden from the model and called by the Portal only after a real user click; it asks the shared lifecycle runtime to open the prepared loopback game in the system default browser.
 
-The tool starts or reuses Needlewhile's loopback controller by executing the shared lifecycle command with both `open --no-window` and `NEEDLEWHILE_NO_WINDOW=1`. It then renders one saturated transparent pixel-art Portal icon inside a 44×44 borderless conversation surface. The browser opens only after the user clicks that icon.
+The tool starts or reuses Needlewhile's loopback controller by executing the shared lifecycle command with both `open --no-window` and `NEEDLEWHILE_NO_WINDOW=1`. It then renders one saturated transparent pixel-art Portal icon inside a 44×44 borderless conversation surface. Its eight-frame GIF loops continuously while the task remains visible. The browser opens only after the user clicks that icon.
+
+## Task-time synchronization
+
+The Portal click does not create or restart a task timer. `UserPromptSubmit` creates the controller lease first, keyed by `clientKind + sessionId + runId`, and records one `startedAt`. The render tool reuses that exact controller, port, and token. When clicked, `open_needlewhile_game` only opens the existing token-bearing loopback URL; the browser then reads `/api/state` and computes elapsed time from the same `startedAt` (and freezes it at `completedAt` after `Stop`). Time spent working before the user clicks the Portal is therefore included in the game timer.
 
 ## Architecture
 
@@ -38,11 +42,11 @@ Implemented JSON-RPC methods:
 The registered UI resource is versioned as:
 
 ```text
-ui://needlewhile/portal-v0.2.3.html
+ui://needlewhile/portal-v0.2.4.html
 text/html;profile=mcp-app
 ```
 
-The adapter also serves the fixed launcher for the earlier `v0.2.1` and `v0.2.2` resource URIs, so a remounted Portal from an existing task does not fail with `Resource not found` after an upgrade.
+The adapter also serves the fixed launcher for the earlier `v0.2.1`, `v0.2.2`, and `v0.2.3` resource URIs, so a remounted Portal from an existing task does not fail with `Resource not found` after an upgrade.
 
 Example local stdio configuration:
 
@@ -77,8 +81,9 @@ The self-test:
 6. repeats the render tool call to verify idempotent controller reuse;
 7. checks the Codex-host result metadata paths used to recover the click URL;
 8. executes the real inline script in a minimal VM host to verify single-flight clicks, standard `tools/call`, and the `window.openai.callTool` compatibility fallback;
-9. checks the injected animated GIF, saturated borderless surface, intrinsic-size notification, and legacy resource aliases;
-10. shuts down the temporary controller.
+9. checks that the injected eight-frame GIF is encoded for an infinite loop, plus the saturated borderless surface, intrinsic-size notification, and legacy resource aliases;
+10. starts a named task in an isolated temporary controller, waits before the click, and proves the entry and browser states preserve the same controller URL, `startedAt`, round revision, heartbeat, and completion boundary;
+11. shuts down the temporary controller.
 
 ## Specification sources
 

@@ -11,10 +11,13 @@ const defaultStateDir = join(tmpdir(), `needlewhile-${String(identity).replace(/
 const STATE_DIR = process.env.NEEDLEWHILE_STATE_DIR || defaultStateDir;
 const STATE_FILE = join(STATE_DIR, "server.json");
 const START_LOCK = join(STATE_DIR, "starting.lock");
-const VERSION = "0.4.5";
+const VERSION = "0.4.6";
 const PROTOCOL_VERSION = 2;
 const verbose = process.argv.includes("--verbose");
 const noWindow = process.argv.includes("--no-window") || process.env.NEEDLEWHILE_NO_WINDOW === "1";
+const testBrowserLauncher = process.env.NEEDLEWHILE_SELF_TEST === "1"
+  ? process.env.NEEDLEWHILE_TEST_BROWSER_LAUNCHER
+  : null;
 const inlinePortal = process.argv.includes("--inline-portal");
 const INLINE_PORTAL_CONTEXT = [
   "Needlewhile's trusted top-level task-start hook is active.",
@@ -235,6 +238,7 @@ function detach(command, args) {
 async function openPortal(state) {
   const url = `http://127.0.0.1:${state.port}/#${state.token}`;
   if (noWindow) return true;
+  if (testBrowserLauncher) return await detach(process.execPath, [testBrowserLauncher, url]);
   if (process.platform === "darwin") return await detach("open", [url]);
   if (process.platform === "win32") return await detach("cmd", ["/c", "start", "", url]);
   return await detach("xdg-open", [url]);

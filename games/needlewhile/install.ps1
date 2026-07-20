@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("all", "codex", "claude")]
+  [ValidateSet("all", "codex", "claude", "verify")]
   [string]$Target = "all"
 )
 
@@ -42,6 +42,13 @@ if ($NodeMajor -lt 18) {
   throw "Needlewhile requires Node.js 18 or newer; found v$NodeVersion."
 }
 
+if (($Target -eq "codex" -or $Target -eq "verify") -and -not (Get-Command codex -ErrorAction SilentlyContinue)) {
+  throw "Codex CLI was not found; make the 'codex' command available on PATH, then retry."
+}
+if ($Target -eq "claude" -and -not (Get-Command claude -ErrorAction SilentlyContinue)) {
+  throw "Claude Code CLI was not found; make the 'claude' command available on PATH, then retry."
+}
+
 try {
   $ExpectedCodexVersion = [string]((Get-Content -LiteralPath $CodexManifest -Raw | ConvertFrom-Json).version)
 }
@@ -52,9 +59,11 @@ if ([string]::IsNullOrWhiteSpace($ExpectedCodexVersion)) {
   throw "The Needlewhile Codex manifest does not contain a version."
 }
 
-node (Join-Path $RootDir "scripts/validate.mjs")
-if ($LASTEXITCODE -ne 0) {
-  throw "Needlewhile package validation failed."
+if ($Target -ne "verify") {
+  node (Join-Path $RootDir "scripts/validate.mjs")
+  if ($LASTEXITCODE -ne 0) {
+    throw "Needlewhile package validation failed."
+  }
 }
 
 function Invoke-CodexJson {
@@ -306,6 +315,7 @@ function Confirm-CodexHooks {
 
   $script:CodexPending = $true
   Write-Warning "NEEDLEWHILE_STATUS=pending"
+  Write-Warning "After review, run: & `"$RootDir\install.ps1`" -Target verify"
   Write-Warning "After trusting all three Hooks, verify with: node `"$CodexDoctor`" --cwd `"$RootDir`""
   Write-Warning "When the doctor reports ready, restart Codex once; do not rerun this installer. No trust settings were changed automatically."
 }
@@ -334,6 +344,35 @@ function Install-ClaudeNeedlewhile {
   if ($LASTEXITCODE -ne 0) { throw "Claude Code plugin installation failed." }
   $script:Installed = $true
   Write-Host "Claude Code installed. Restart it before the first automatic round."
+}
+
+if ($Target -eq "verify") {
+  if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {
+    throw "Codex CLI was not found; make the 'codex' command available on PATH, then retry."
+  }
+  $Verified = Get-CodexNeedlewhilePlugin
+  if ($null -eq $Verified -or -not [bool]$Verified.enabled) {
+    throw "Needlewhile is missing or disabled. Run: & `"$RootDir\install.ps1`" -Target codex"
+  }
+  $ActualVersion = [string]$Verified.version
+  if ($ActualVersion -ne $ExpectedCodexVersion) {
+    $DisplayVersion = if ([string]::IsNullOrWhiteSpace($ActualVersion)) { "unknown" } else { $ActualVersion }
+    throw "Needlewhile version mismatch: expected $ExpectedCodexVersion, found $DisplayVersion. Run: & `"$RootDir\install.ps1`" -Target codex"
+  }
+  Invoke-CodexHookDoctor
+  if ($DoctorExitCode -eq 0) {
+    Write-Host "Needlewhile is installed and all three Codex Hooks are trusted."
+    Write-Host "Fully quit and reopen Codex once, then start a fresh top-level task to test the Portal."
+    exit 0
+  }
+  if ($DoctorExitCode -eq 2) {
+    Write-Warning "NEEDLEWHILE_STATUS=pending"
+    Write-Warning "Needlewhile is installed, but Hook review is still required."
+    Write-Warning "In Codex Desktop: Settings -> Plugins -> Needlewhile -> Review -> Trust all."
+    Write-Warning "Then run this verification command again."
+    exit 2
+  }
+  throw "Needlewhile Hook verification failed (doctor exit $DoctorExitCode)."
 }
 
 if ($Target -eq "all" -or $Target -eq "codex") { Install-CodexNeedlewhile }

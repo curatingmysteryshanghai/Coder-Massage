@@ -24,6 +24,14 @@ TARGET=${1:---all}
 INSTALLED=0
 CODEX_PENDING=0
 
+case "$TARGET" in
+  --codex|--claude|--all|--verify) ;;
+  *)
+    echo "usage: sh ./install.sh [--codex|--claude|--all|--verify]" >&2
+    exit 64
+    ;;
+esac
+
 if ! command -v node >/dev/null 2>&1; then
   echo "Needlewhile requires Node.js 18 or newer." >&2
   exit 69
@@ -41,6 +49,15 @@ if [ "$NODE_MAJOR" -lt 18 ]; then
   exit 69
 fi
 
+if { [ "$TARGET" = "--codex" ] || [ "$TARGET" = "--verify" ]; } && ! command -v codex >/dev/null 2>&1; then
+  echo "Codex CLI was not found; make the 'codex' command available on PATH, then retry." >&2
+  exit 69
+fi
+if [ "$TARGET" = "--claude" ] && ! command -v claude >/dev/null 2>&1; then
+  echo "Claude Code CLI was not found; make the 'claude' command available on PATH, then retry." >&2
+  exit 69
+fi
+
 if ! EXPECTED_CODEX_VERSION=$(node -e '
   const fs = require("node:fs");
   const manifest = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
@@ -51,7 +68,9 @@ if ! EXPECTED_CODEX_VERSION=$(node -e '
   exit 65
 fi
 
-node "$ROOT_DIR/scripts/validate.mjs"
+if [ "$TARGET" != "--verify" ]; then
+  node "$ROOT_DIR/scripts/validate.mjs"
+fi
 
 marketplace_field() {
   field=$1
@@ -320,8 +339,51 @@ verify_codex_hooks() {
 
   CODEX_PENDING=1
   echo "NEEDLEWHILE_STATUS=pending" >&2
+  echo "After review, run: sh \"$ROOT_DIR/install.sh\" --verify" >&2
   echo "After trusting all three Hooks, verify with: node \"$CODEX_DOCTOR\" --cwd \"$ROOT_DIR\"" >&2
   echo "When the doctor reports ready, restart Codex once; do not rerun this installer. No trust settings were changed automatically." >&2
+}
+
+verify_codex_install() {
+  if ! command -v codex >/dev/null 2>&1; then
+    echo "Codex CLI was not found; make the 'codex' command available on PATH, then retry." >&2
+    return 69
+  fi
+
+  if ! PLUGIN_LIST_JSON=$(codex plugin list --json); then
+    echo "Could not inspect the installed Needlewhile plugin. Keep the Jieya checkout at its configured path and retry." >&2
+    return 70
+  fi
+  if [ "$(plugin_state)" != "enabled" ]; then
+    echo "Needlewhile is missing or disabled; run: sh \"$ROOT_DIR/install.sh\" --codex" >&2
+    return 70
+  fi
+  actual_version=$(plugin_version)
+  if [ "$actual_version" != "$EXPECTED_CODEX_VERSION" ]; then
+    echo "Needlewhile version mismatch: expected $EXPECTED_CODEX_VERSION, found ${actual_version:-unknown}." >&2
+    echo "Run: sh \"$ROOT_DIR/install.sh\" --codex" >&2
+    return 70
+  fi
+
+  doctor_status=0
+  run_codex_doctor || doctor_status=$?
+  case "$doctor_status" in
+    0)
+      echo "Needlewhile is installed and all three Codex Hooks are trusted."
+      echo "Fully quit and reopen Codex once, then start a fresh top-level task to test the Portal."
+      ;;
+    2)
+      echo "NEEDLEWHILE_STATUS=pending" >&2
+      echo "Needlewhile is installed, but Hook review is still required." >&2
+      echo "In Codex Desktop: Settings -> Plugins -> Needlewhile -> Review -> Trust all." >&2
+      echo "Then run this verification command again." >&2
+      return 2
+      ;;
+    *)
+      echo "Needlewhile Hook verification failed (doctor exit $doctor_status)." >&2
+      return 70
+      ;;
+  esac
 }
 
 install_codex() {
@@ -351,9 +413,10 @@ case "$TARGET" in
   --codex) install_codex ;;
   --claude) install_claude ;;
   --all) install_codex; install_claude ;;
-  *)
-    echo "usage: ./install.sh [--codex|--claude|--all]" >&2
-    exit 64
+  --verify)
+    verify_status=0
+    verify_codex_install || verify_status=$?
+    exit "$verify_status"
     ;;
 esac
 
