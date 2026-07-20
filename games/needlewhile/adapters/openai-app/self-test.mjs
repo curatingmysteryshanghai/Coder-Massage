@@ -131,6 +131,7 @@ try {
   });
   assert.equal(initialized.result.protocolVersion, "2025-11-25");
   assert.equal(initialized.result.serverInfo.name, "needlewhile-openai-portal");
+  assert.match(initialized.result.instructions, /trusted Needlewhile UserPromptSubmit hook/);
 
   child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`);
 
@@ -141,6 +142,8 @@ try {
   assert.equal(tools.result.tools.length, 1);
   const descriptor = tools.result.tools[0];
   assert.equal(descriptor.name, "show_needlewhile_portal");
+  assert.match(descriptor.description, /trusted Needlewhile UserPromptSubmit hook/);
+  assert.match(descriptor.description, /never opens a browser/);
   assert.equal(descriptor._meta.ui.resourceUri, RESOURCE_URI);
   assert.equal(descriptor._meta["openai/outputTemplate"], RESOURCE_URI);
   assert.deepEqual(descriptor.annotations, {
@@ -162,6 +165,8 @@ try {
   assert.deepEqual(content._meta["openai/widgetCSP"].redirect_domains, ["http://127.0.0.1"]);
   assert.match(content.text, /request\("ui\/open-link", \{ url: portalHref \}/);
   assert.match(content.text, /window\.openai\.openExternal\(\{ href: portalHref, redirectUrl: false \}\)/);
+  assert.match(content.text, /toolResponseMetadata\?\.call_tool_result\?\._meta\?\.portalHref/);
+  assert.match(content.text, /toolResponseMetadata\?\.mcp_tool_result\?\._meta\?\.portalHref/);
   assert.match(content.text, /<a[\s\S]+id="portal"/);
   assert.doesNotMatch(content.text, /<iframe/i);
 

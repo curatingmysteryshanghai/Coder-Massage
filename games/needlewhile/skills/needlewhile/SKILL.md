@@ -5,7 +5,7 @@ description: Control the opt-in Needlewhile waiting Portal while Codex, Claude C
 
 # Needlewhile / 扎会儿 · Ver.0.2
 
-Needlewhile is a tiny local companion for the interval between a submitted prompt and the agent's answer. Lifecycle hooks quietly update task state. They never open, resize, maximize, or take over a browser.
+Needlewhile is a tiny local companion for the interval between a submitted prompt and the agent's answer. Lifecycle hooks quietly update task state. A trusted top-level Codex hook also asks the host to render one small inline Portal. Hooks never open, resize, maximize, or take over a browser.
 
 ## Commands
 
@@ -21,7 +21,8 @@ When the user explicitly asks to open or demo Needlewhile, start a manual interv
 
 ## Behavior contract
 
-- Open the browser only after an explicit user request. A hook start is state-only.
+- A trusted top-level Codex prompt hook may request one small inline Portal. It must not request it for subagents, remote sessions, or again during the same turn.
+- Open the full browser game only after the user clicks the inline Portal or explicitly requests `open`.
 - Use the operating system's default browser with a normal URL. Never pass full-screen, maximize, app-window, profile, or browser-selection flags.
 - Never capture global keyboard input. Input belongs only to the focused toy tab.
 - Never block the agent if the local controller is unavailable. Hook output must remain valid JSON and exit quickly.

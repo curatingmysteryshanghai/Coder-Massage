@@ -12,7 +12,7 @@ const AUDIO = join(ROOT, "skills", "needlewhile", "app", "public", "needle-audio
 const OPENAI_ADAPTER_DIR = join(ROOT, "adapters", "openai-app");
 const OPENAI_ADAPTER_SERVER = join(OPENAI_ADAPTER_DIR, "server.mjs");
 const OPENAI_ADAPTER_TEST = join(OPENAI_ADAPTER_DIR, "self-test.mjs");
-const EXPECTED_RUNTIME_VERSION = "0.4.0";
+const EXPECTED_RUNTIME_VERSION = "0.4.1";
 const EXPECTED_DESIGN_VERSION = "Ver. 0.2";
 const EXPECTED_PROTOCOL_VERSION = 2;
 const STATE_DIR = mkdtempSync(join(tmpdir(), "needlewhile-validate-"));
@@ -40,10 +40,10 @@ function json(relativePath) {
   return JSON.parse(read(relativePath).toString("utf8"));
 }
 
-function runLifecycle(action, payload = {}) {
-  return spawnSync(process.execPath, [LIFECYCLE, action, "--no-window"], {
+function runLifecycle(action, payload = {}, extraArgs = [], envOverrides = {}) {
+  return spawnSync(process.execPath, [LIFECYCLE, action, "--no-window", ...extraArgs], {
     encoding: "utf8",
-    env: fixtureEnv,
+    env: { ...fixtureEnv, ...envOverrides },
     input: JSON.stringify(payload),
     timeout: 5_000,
   });
@@ -62,6 +62,15 @@ function readServerState() {
 function assertHookResult(result, label) {
   assert(result.status === 0, `${label} hook exited ${result.status}: ${result.stderr}`);
   assert(result.stdout.trim() === "{}", `${label} hook stdout must be exactly {}`);
+}
+
+function readHookOutput(result, label) {
+  assert(result.status === 0, `${label} hook exited ${result.status}: ${result.stderr}`);
+  try {
+    return JSON.parse(result.stdout);
+  } catch {
+    throw new Error(`${label} hook stdout is not valid JSON: ${result.stdout}`);
+  }
 }
 
 function assertPng(relativePath) {
@@ -101,7 +110,7 @@ try {
     "Needlewhile Portal MCP server entrypoint mismatch",
   );
   assert(claudeManifest.hooks === "./hooks/claude-hooks.json", "Claude hook path mismatch");
-  pass("runtime 0.4.0, design Ver. 0.2, and protocol 2 align across release manifests");
+  pass("runtime 0.4.1, design Ver. 0.2, and protocol 2 align across release manifests");
 
   const codexEvents = Object.keys(codexHooks.hooks);
   const supportedCodexEvents = new Set([
@@ -123,10 +132,9 @@ try {
   pass("hook event sets match the current Codex and Claude Code schemas");
 
   const lifecycleSource = read("skills/needlewhile/scripts/lifecycle.mjs").toString("utf8");
-  const startHookDefinitions = [
-    hookDefinition(codexHooks, "UserPromptSubmit"),
-    hookDefinition(claudeHooks, "UserPromptSubmit"),
-  ];
+  const codexStartHookDefinition = hookDefinition(codexHooks, "UserPromptSubmit");
+  const claudeStartHookDefinition = hookDefinition(claudeHooks, "UserPromptSubmit");
+  const startHookDefinitions = [codexStartHookDefinition, claudeStartHookDefinition];
   const browserTakeoverPatterns = [
     /--start-fullscreen/i,
     /--start-maximized/i,
@@ -139,6 +147,8 @@ try {
     assert(/lifecycle\.mjs/.test(definition) && /start/.test(definition), "prompt hook must invoke lifecycle start");
     assert(!/["'\]]open(?:["'\s,\]])/.test(definition), "prompt hook must not invoke the explicit open action");
   }
+  assert(/--inline-portal/.test(codexStartHookDefinition), "Codex prompt hook does not request its inline Portal");
+  assert(!/--inline-portal/.test(claudeStartHookDefinition), "Claude prompt hook unexpectedly requests a Codex inline Portal");
   for (const pattern of browserTakeoverPatterns) {
     assert(!pattern.test(lifecycleSource), `lifecycle retains browser takeover flag ${pattern}`);
     assert(startHookDefinitions.every((definition) => !pattern.test(definition)), `start hook retains browser takeover flag ${pattern}`);
@@ -146,7 +156,8 @@ try {
   assert(/if \(action === "open"\)/.test(lifecycleSource), "explicit open action is missing");
   assert(/function openPortal\(/.test(lifecycleSource), "system-default-browser Portal opener is missing");
   assert(/if \(noWindow\) return true;/.test(lifecycleSource), "open action has no safe no-window path");
-  pass("start hooks are state-only; explicit open is opt-in and browser-takeover flags are absent");
+  assert(lifecycleSource.includes("hookSpecificOutput"), "Codex inline Portal context output is missing");
+  pass("Codex start requests an inline Portal; browser open stays click-only and takeover flags are absent");
 
   const skill = read("skills/needlewhile/SKILL.md").toString("utf8");
   const frontmatter = skill.match(/^---\n([\s\S]*?)\n---/);
@@ -173,7 +184,7 @@ try {
   });
   assert(openaiAdapterTest.status === 0, `OpenAI MCP App self-test failed: ${openaiAdapterTest.stderr}`);
   assert(openaiAdapterTest.stdout.includes("browser launch: not observed"), "OpenAI adapter test did not prove browser-launch safety");
-  pass("OpenAI MCP App returns a click-only Portal without launching a browser");
+  pass("OpenAI MCP App supports trusted hook rendering and returns a click-only Portal without launching a browser");
 
   const html = read("skills/needlewhile/app/public/index.html").toString("utf8");
   const clientSource = read("skills/needlewhile/app/public/app.js").toString("utf8");
@@ -249,6 +260,100 @@ try {
   assert(status.displayVersion === EXPECTED_DESIGN_VERSION, "live design version mismatch");
   assert(status.protocolVersion === EXPECTED_PROTOCOL_VERSION, "live protocol version mismatch");
   pass("explicit open is safe under --no-window and live version metadata aligns");
+
+  const subagentPortalStart = runLifecycle("start", {
+    hook_event_name: "UserPromptSubmit",
+    session_id: "subagent-session",
+    turn_id: "subagent-run",
+    agent_id: "child-agent",
+  }, ["--client", "codex", "--inline-portal"]);
+  assertHookResult(subagentPortalStart, "subagent inline Portal start");
+
+  const remotePortalStart = runLifecycle("start", {
+    hook_event_name: "UserPromptSubmit",
+    session_id: "remote-session",
+    turn_id: "remote-run",
+  }, ["--client", "codex", "--inline-portal"], { CLAUDE_CODE_REMOTE: "true" });
+  assertHookResult(remotePortalStart, "remote inline Portal start");
+
+  const missingFlagStart = runLifecycle("start", {
+    hook_event_name: "UserPromptSubmit",
+    session_id: "missing-flag-session",
+    turn_id: "missing-flag-run",
+  }, ["--client", "codex"]);
+  assertHookResult(missingFlagStart, "missing-flag Portal start");
+  assertHookResult(runLifecycle("stop", {
+    session_id: "missing-flag-session",
+    turn_id: "missing-flag-run",
+  }, ["--client", "codex"]), "missing-flag Portal stop");
+
+  const nonCodexStart = runLifecycle("start", {
+    hook_event_name: "UserPromptSubmit",
+    session_id: "non-codex-session",
+    turn_id: "non-codex-run",
+  }, ["--client", "claude-code", "--inline-portal"]);
+  assertHookResult(nonCodexStart, "non-Codex inline Portal start");
+  assertHookResult(runLifecycle("stop", {
+    session_id: "non-codex-session",
+    turn_id: "non-codex-run",
+  }, ["--client", "claude-code"]), "non-Codex inline Portal stop");
+
+  const wrongEventStart = runLifecycle("start", {
+    hook_event_name: "PostToolUse",
+    session_id: "wrong-event-session",
+    turn_id: "wrong-event-run",
+  }, ["--client", "codex", "--inline-portal"]);
+  assertHookResult(wrongEventStart, "wrong-event inline Portal start");
+  assertHookResult(runLifecycle("stop", {
+    session_id: "wrong-event-session",
+    turn_id: "wrong-event-run",
+  }, ["--client", "codex"]), "wrong-event inline Portal stop");
+
+  const inlinePortalStart = runLifecycle("start", {
+    hook_event_name: "UserPromptSubmit",
+    session_id: "inline-portal-session",
+    turn_id: "inline-portal-run",
+    prompt: "Show the Portal while this task runs",
+  }, ["--client", "codex", "--inline-portal"]);
+  const inlinePortalOutput = readHookOutput(inlinePortalStart, "top-level inline Portal start");
+  assert(
+    inlinePortalOutput.hookSpecificOutput?.hookEventName === "UserPromptSubmit",
+    "inline Portal hook output uses the wrong event schema",
+  );
+  const additionalContext = inlinePortalOutput.hookSpecificOutput?.additionalContext;
+  assert(
+    typeof additionalContext === "string"
+    && additionalContext.includes("mcp__needlewhile_portal__show_needlewhile_portal")
+    && additionalContext.includes("exactly once")
+    && additionalContext.includes("does not open a browser"),
+    "inline Portal hook context is incomplete",
+  );
+  status = readStatus();
+  assert(status.phase === "active" && status.activeRuns === 1, "inline Portal start did not create one active run");
+  assert(status.toolSteps === 0, "inline Portal start incorrectly counted a task tool step");
+
+  const portalHeartbeat = runLifecycle("heartbeat", {
+    session_id: "inline-portal-session",
+    turn_id: "inline-portal-run",
+    tool_name: "mcp__needlewhile_portal__show_needlewhile_portal",
+  }, ["--client", "codex"]);
+  assertHookResult(portalHeartbeat, "inline Portal render heartbeat");
+  status = readStatus();
+  assert(status.toolSteps === 0, "inline Portal render was counted as a task tool step");
+
+  const nearMatchHeartbeat = runLifecycle("heartbeat", {
+    session_id: "inline-portal-session",
+    turn_id: "inline-portal-run",
+    tool_name: "other__show_needlewhile_portal",
+  }, ["--client", "codex"]);
+  assertHookResult(nearMatchHeartbeat, "near-match Portal heartbeat");
+  status = readStatus();
+  assert(status.toolSteps === 1, "an unrelated near-match tool was incorrectly suppressed");
+  assertHookResult(runLifecycle("stop", {
+    session_id: "inline-portal-session",
+    turn_id: "inline-portal-run",
+  }, ["--client", "codex"]), "inline Portal stop");
+  pass("trusted top-level Codex hooks request one inline Portal and suppress subagent, remote, and self-heartbeat noise");
 
   const initialStateFile = readServerState();
   const startTask = runLifecycle("start", {

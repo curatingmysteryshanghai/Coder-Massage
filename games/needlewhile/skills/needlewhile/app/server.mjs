@@ -18,7 +18,7 @@ mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
 
 const STATE_FILE = join(STATE_DIR, "server.json");
 const TOKEN = randomBytes(24).toString("hex");
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const DISPLAY_VERSION = "Ver. 0.2";
 const PROTOCOL_VERSION = 2;
 const MAX_BODY_BYTES = 16 * 1024;

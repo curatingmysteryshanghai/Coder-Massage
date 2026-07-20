@@ -30,7 +30,7 @@ const tool = {
   name: "show_needlewhile_portal",
   title: "Show Needlewhile Portal",
   description:
-    "Use this when the user explicitly asks to open or play Needlewhile. Render a small opt-in pixel portal; never call this tool automatically during conversation loading or for unrelated tasks.",
+    "Render the small Needlewhile pixel Portal when the user explicitly asks, or exactly once when the trusted Needlewhile UserPromptSubmit hook requests it for a top-level turn. This tool never opens a browser; the full game opens only after the user clicks the Portal.",
   inputSchema: {
     type: "object",
     properties: {},
@@ -232,7 +232,7 @@ async function dispatch(message) {
         description: "Opt-in inline portal for the local Needlewhile decompression game.",
       },
       instructions:
-        "Call show_needlewhile_portal only after the user explicitly asks to open or play Needlewhile. The tool never opens a browser by itself.",
+        "Call show_needlewhile_portal after an explicit user request, or exactly once when the trusted Needlewhile UserPromptSubmit hook asks for the inline Portal on a top-level turn. Never repeat it during that turn. The tool never opens a browser by itself.",
     });
   }
 

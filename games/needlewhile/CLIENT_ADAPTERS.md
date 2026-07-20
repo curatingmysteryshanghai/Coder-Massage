@@ -1,12 +1,12 @@
 # Needlewhile Ver.0.2 · Client Adapters
 
-Needlewhile uses one local game/runtime and adapts the entry surface to each agent client. Every adapter follows the same safety rule: lifecycle events may update state; a browser or embedded UI appears only after an explicit user intent.
+Needlewhile uses one local game/runtime and adapts the entry surface to each agent client. A trusted Codex task-start hook may request the small inline launcher once. The full browser game still opens only after a user click or explicit `open` request.
 
 ## Capability matrix
 
 | Client | Lifecycle source | Best Portal surface | Ver.0.2 status |
 | --- | --- | --- | --- |
-| Codex desktop / compatible ChatGPT host | bundled Codex hooks + local MCP App | small inline MCP Apps pixel Portal; click opens the normal local game URL | Packaged; desktop-host rendering needs a post-install smoke test |
+| Codex desktop / compatible ChatGPT host | bundled Codex hooks + local MCP App | small inline MCP Apps pixel Portal at top-level task start; click opens the normal local game URL | Packaged, adapter-tested, and requires one-time hook trust after install/update |
 | Codex CLI / IDE | bundled hooks where supported | explicit local URL in the system browser | Shared bridge works; no inline-widget promise |
 | Claude Code local | bundled Claude hooks | ordinary clickable `http://127.0.0.1` URL / explicit browser open | Packaged and fixture-tested; no arbitrary HTML widget surface |
 | Tencent WorkBuddy desktop | host Skill/Hook wrapper around the generic bridge | right-side built-in browser preview of the local Web app | Protocol ready; host-specific wrapper and runtime smoke test remain |
@@ -48,8 +48,8 @@ New generic adapters should always provide a stable per-turn run ID; this is wha
 
 The plugin keeps two surfaces separate:
 
-1. `hooks.json` updates the local lifecycle controller and returns `{}`. It has no UI injection path and never starts a browser.
-2. The local MCP Apps adapter exposes an explicit `show_needlewhile_portal` render tool. Its bundled `text/html;profile=mcp-app` resource draws the small pixel vortex inline. Clicking it calls the host's vetted external-navigation API and opens the tokenized loopback game URL.
+1. `hooks.json` updates the local lifecycle controller. On a successful, trusted, top-level Codex `UserPromptSubmit`, it returns official `hookSpecificOutput.additionalContext` asking Codex to call the Portal tool once. Other lifecycle events return `{}`. Hooks never start a browser.
+2. The local MCP Apps adapter exposes `show_needlewhile_portal`. The user may request it directly, and the trusted prompt hook may request it once at task start. Its bundled `text/html;profile=mcp-app` resource draws the small pixel vortex inline. Clicking it calls the host's vetted external-navigation API and opens the tokenized loopback game URL.
 
 The widget directly bundles its HTML/CSS/JS resource and does not iframe a third-party page. The full game remains a normal local page because it needs sustained keyboard/pointer input, audio, and an SSE connection.
 
@@ -58,6 +58,7 @@ OpenAI's official references:
 - [Build an MCP server](https://developers.openai.com/apps-sdk/build/mcp-server/)
 - [Build a ChatGPT UI](https://developers.openai.com/apps-sdk/build/chatgpt-ui/)
 - [Apps SDK reference](https://developers.openai.com/apps-sdk/reference/)
+- [Codex hooks](https://learn.chatgpt.com/docs/hooks)
 - [Official Apps SDK examples](https://github.com/openai/openai-apps-sdk-examples)
 - [App guidelines](https://developers.openai.com/apps-sdk/app-guidelines/)
 

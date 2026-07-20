@@ -1,15 +1,15 @@
 {
-  "description": "Track Codex task state for Needlewhile without opening or taking over a browser.",
+  "description": "Track Codex task state and request the small inline Needlewhile Portal without opening or taking over a browser.",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" start --client codex",
-            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" start --client codex",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" start --client codex --inline-portal",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" start --client codex --inline-portal",
             "timeout": 5,
-            "statusMessage": "Tracking Needlewhile quietly"
+            "statusMessage": "Preparing the Needlewhile Portal"
           }
         ]
       }

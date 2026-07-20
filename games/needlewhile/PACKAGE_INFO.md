@@ -1,18 +1,18 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.0
+- Plugin/runtime version: 0.4.1
 - Lifecycle protocol: 2
 - Build date: 2026-07-20
 - Runtime: Node.js 18+
 - Native plugin targets: Codex and Claude Code
 - Adapter targets: any local client that can run start/heartbeat/stop commands, including WorkBuddy- or Coze-hosted local runners
-- Local UI: normal tab in the operating system's default browser, opened only by an explicit command
+- Local UI: small inline Codex Portal requested at top-level task start; normal default-browser tab opens only after a user click or explicit command
 - Network: loopback (`127.0.0.1`) only
 
 ## What is included
 
-- Opt-in pixel time Portal; task hooks never launch or resize a browser
+- Click-safe pixel time Portal; the trusted Codex task-start hook requests the inline launcher once and never launches or resizes a browser
 - Live task title, client, elapsed time, tool-step count, and pin count
 - Eight-second closing countdown and pixel ending performance
 - Random paired background/yarn palettes

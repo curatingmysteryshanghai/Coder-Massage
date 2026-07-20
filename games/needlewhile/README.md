@@ -4,7 +4,7 @@ An opt-in local waiting game for AI agent sessions, and Game 01 in the private [
 
 ![Needlewhile Ver.0.2](./design/preview.png)
 
-Lifecycle hooks quietly track a turn. They never launch or take over a browser. When the user asks to open Needlewhile, the operating system opens a normal URL in the current default browser. A pixel time vortex appears first; clicking it enters the yarn-ball game.
+Lifecycle hooks quietly track a turn. After one-time trust in Codex, the top-level prompt hook asks the host to mount a small inline pixel time Portal at task start. Clicking it opens the yarn-ball game in a normal default-browser tab. Hooks themselves never launch or take over a browser.
 
 ## Controls
 
@@ -57,6 +57,8 @@ Windows PowerShell:
 
 The root marketplace catalogs install this plugin as `needlewhile@jieya`.
 
+After installing or updating in Codex, open `/hooks`, review the three Needlewhile commands, and trust them once. Exact command changes intentionally require a fresh review.
+
 ## Lifecycle protocol
 
 `UserPromptSubmit` starts a lease, `PostToolUse` records a heartbeat/tool step, and `Stop` ends the exact run. Claude Code also uses `StopFailure` and `SessionEnd`. Protocol 2 namespaces every lease by `clientKind:sessionId:runId`, verifies runtime compatibility, and serializes concurrent cold starts with a short-lived local lock.
@@ -76,10 +78,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.0`
+- Plugin/runtime package: `0.4.1`
 - Lifecycle protocol: `2`
 
-The runtime advanced from 0.3.0 to 0.4.0 so installed package managers never see a version downgrade.
+Runtime 0.4.1 adds the trusted task-start inline Portal request and Codex-host result metadata compatibility.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 

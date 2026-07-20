@@ -1,8 +1,8 @@
 # Needlewhile OpenAI inline Portal adapter
 
-This directory provides a zero-dependency, JSONL-over-stdio MCP server for hosts that can render MCP Apps resources. It exposes one deliberately opt-in render tool:
+This directory provides a zero-dependency, JSONL-over-stdio MCP server for hosts that can render MCP Apps resources. It exposes one click-safe render tool:
 
-- `show_needlewhile_portal`: use only after the user explicitly asks to open or play Needlewhile.
+- `show_needlewhile_portal`: use after an explicit user request, or exactly once when Needlewhile's trusted top-level `UserPromptSubmit` hook asks Codex to mount the inline Portal.
 
 The tool starts or reuses Needlewhile's loopback controller by executing the shared lifecycle command with both `open --no-window` and `NEEDLEWHILE_NO_WINDOW=1`. It then renders a small pixel-art time portal inside the conversation. The browser opens only after the user clicks that portal.
 
@@ -55,7 +55,7 @@ Example local stdio configuration:
 }
 ```
 
-The host should call `show_needlewhile_portal` only for an explicit request such as “打开 Needlewhile” or “我想玩扎针小游戏”. It should not call it merely because a conversation or task started.
+The host should call `show_needlewhile_portal` for an explicit request such as “打开 Needlewhile” or “我想玩扎针小游戏”, or once when the trusted Needlewhile prompt hook injects that instruction at the start of a top-level Codex turn. The tool mounts only the small inline launcher. The browser game still requires a user click.
 
 ## Validate
 
@@ -70,7 +70,8 @@ The self-test:
 3. verifies the returned URL is loopback-only;
 4. replaces OS browser launchers with marker scripts and confirms none are executed;
 5. repeats the tool call to verify idempotent controller reuse;
-6. shuts down the temporary controller.
+6. checks the Codex-host result metadata paths used to recover the click URL;
+7. shuts down the temporary controller.
 
 ## Specification sources
 

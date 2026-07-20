@@ -243,6 +243,10 @@
         const applyToolResult = (result) => {
           setPortalHref(
             result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.call_tool_result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.mcp_tool_result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.callToolResult?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.mcpToolResult?._meta?.portalHref
             ?? result?.toolResponseMetadata?.portalHref
             ?? result?.structuredContent?.portalHref
             ?? result?.portalHref,

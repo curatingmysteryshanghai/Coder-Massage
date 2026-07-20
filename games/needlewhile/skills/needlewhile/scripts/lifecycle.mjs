@@ -11,10 +11,21 @@ const defaultStateDir = join(tmpdir(), `needlewhile-${String(identity).replace(/
 const STATE_DIR = process.env.NEEDLEWHILE_STATE_DIR || defaultStateDir;
 const STATE_FILE = join(STATE_DIR, "server.json");
 const START_LOCK = join(STATE_DIR, "starting.lock");
-const VERSION = "0.4.0";
+const VERSION = "0.4.1";
 const PROTOCOL_VERSION = 2;
 const verbose = process.argv.includes("--verbose");
 const noWindow = process.argv.includes("--no-window") || process.env.NEEDLEWHILE_NO_WINDOW === "1";
+const inlinePortal = process.argv.includes("--inline-portal");
+const INLINE_PORTAL_CONTEXT = [
+  "Needlewhile's trusted top-level task-start hook is active.",
+  "Before substantive work, call `mcp__needlewhile_portal__show_needlewhile_portal` exactly once with `{}` so Codex renders the small inline time Portal.",
+  "The tool prepares localhost state but does not open a browser; the full game opens only if the user clicks the Portal.",
+  "Do not call it for a subagent or repeat it during this turn. If the tool is unavailable, continue silently.",
+].join(" ");
+const INLINE_PORTAL_TOOL_NAMES = new Set([
+  "show_needlewhile_portal",
+  "mcp__needlewhile_portal__show_needlewhile_portal",
+]);
 
 function log(message) {
   if (verbose) process.stderr.write(`[needlewhile] ${message}\n`);
@@ -214,13 +225,22 @@ function openPortal(state) {
   return detach("xdg-open", [url]);
 }
 
-function hookOutput() {
-  process.stdout.write("{}\n");
+function hookOutput(additionalContext = null) {
+  const output = additionalContext
+    ? {
+        hookSpecificOutput: {
+          hookEventName: "UserPromptSubmit",
+          additionalContext,
+        },
+      }
+    : {};
+  process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
 const input = await readHookInput();
 const action = actionFromInput(input);
 const clientKind = clientKindFromInput(input);
+const toolName = cleanLabel(input.tool_name ?? input.tool?.name, 96);
 
 if (input.agent_id || input.agent_type || input.is_subagent) {
   log("ignored a subagent lifecycle event");
@@ -230,6 +250,12 @@ if (input.agent_id || input.agent_type || input.is_subagent) {
 
 if (process.env.CLAUDE_CODE_REMOTE === "true" && action === "start") {
   log("remote session detected; local Portal is unavailable");
+  hookOutput();
+  process.exit(0);
+}
+
+if (action === "heartbeat" && INLINE_PORTAL_TOOL_NAMES.has(toolName)) {
+  log("ignored the inline Portal render as a task tool step");
   hookOutput();
   process.exit(0);
 }
@@ -278,9 +304,14 @@ const payload = {
   runId: rawRunId ?? "current",
   hasRunId: rawRunId !== null && rawRunId !== undefined && rawRunId !== "",
   taskTitle: taskTitleFromInput(input),
-  toolName: cleanLabel(input.tool_name ?? input.tool?.name, 48),
+  toolName: cleanLabel(toolName, 48),
 };
 const result = await sendControl(state, payload);
 
 log(`${effectiveAction}: ${result?.ok ? "ok" : "no response"}`);
-hookOutput();
+const shouldRequestInlinePortal = result?.ok
+  && inlinePortal
+  && action === "start"
+  && input.hook_event_name === "UserPromptSubmit"
+  && clientKind === "codex";
+hookOutput(shouldRequestInlinePortal ? INLINE_PORTAL_CONTEXT : null);

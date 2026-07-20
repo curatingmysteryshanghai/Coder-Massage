@@ -10,8 +10,8 @@ Jieya is a private collection of low-attention decompression games for people wo
 
 ## What changed in Ver.0.2
 
-- **Browser-safe opt-in:** task hooks quietly track state and never launch, maximize, resize, profile, or switch a browser. The system default browser opens a normal tab only after an explicit `open` command.
-- **Pixel time Portal:** the user chooses when to enter the game through a small animated time vortex.
+- **Browser-safe task start:** trusted Codex hooks quietly track state and request one small inline Portal. They never launch, maximize, resize, profile, or switch a browser. The system default browser opens a normal tab only after a user click or explicit `open` command.
+- **Pixel time Portal:** the small animated time vortex appears with a top-level Codex task; the user still chooses when to enter the game.
 - **Browser keys stay usable:** `Escape`, `F11`, Tab, and modifier shortcuts never place needles.
 - **Concrete task state:** the upper-left readout shows a sanitized task label, agent client, elapsed time, tool steps, and pin count.
 - **A real ending:** the final lifecycle event starts an eight-second close countdown and pixel closing performance.
@@ -129,7 +129,7 @@ Replace `workbuddy` with `coze` or another stable client name. Native packaging 
 ## Versions
 
 - Jieya/design release: **0.2.0 / Ver.0.2**
-- Needlewhile plugin/runtime: **0.4.0** (advanced from the existing 0.3.0; no semantic-version downgrade)
+- Needlewhile plugin/runtime: **0.4.1** (task-start inline Portal request plus Codex-host result metadata compatibility)
 - Lifecycle protocol: **2**
 
 ## Repository layout

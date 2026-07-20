@@ -50,7 +50,7 @@ Result: passed for the local game surface
 ## Resolved findings during QA
 
 - **P1 · hidden scroll-container drift:** dense long needles increased the game surface's internal scroll size. Keyboard focus shifted the top status area off-screen despite `overflow: hidden`. Switched the page and game surface to `overflow: clip`; repeated desktop/mobile input kept both scroll offsets at zero.
-- **P1 · browser takeover:** removed Chrome/Edge selection, isolated browser profile creation, app mode, maximize, and full-screen flags. Start hooks are now state-only; explicit `open` uses the OS default browser.
+- **P1 · browser takeover:** removed Chrome/Edge selection, isolated browser profile creation, app mode, maximize, and full-screen flags. The Codex start hook may request a small inline launcher; only a user click or explicit `open` asks the OS default browser to open the game.
 - **P1 · delayed ending race:** an older turn's late stop could remove its replacement. Protocol 2 treats explicit stale run IDs as no-ops and namespaces leases by client/session/run.
 - **P1 · mixed concurrent status:** title, timer, tool count, and client now come from one focused run. The global round revision advances only on a new start, so concurrent heartbeats can change focus without repeatedly clearing the yarn.
 - **P2 · center dead zone:** the old radius excluded the ball's front center. Ver.0.2 uses a dedicated front-face distribution and independent approach angles.
