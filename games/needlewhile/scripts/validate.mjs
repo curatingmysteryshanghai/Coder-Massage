@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -12,7 +12,9 @@ const AUDIO = join(ROOT, "skills", "needlewhile", "app", "public", "needle-audio
 const OPENAI_ADAPTER_DIR = join(ROOT, "adapters", "openai-app");
 const OPENAI_ADAPTER_SERVER = join(OPENAI_ADAPTER_DIR, "server.mjs");
 const OPENAI_ADAPTER_TEST = join(OPENAI_ADAPTER_DIR, "self-test.mjs");
-const EXPECTED_RUNTIME_VERSION = "0.4.2";
+const CODEX_HOOK_DOCTOR = join(ROOT, "scripts", "codex-hook-doctor.mjs");
+const CODEX_HOOK_DOCTOR_TEST = join(ROOT, "scripts", "codex-hook-doctor.test.mjs");
+const EXPECTED_RUNTIME_VERSION = "0.4.3";
 const EXPECTED_DESIGN_VERSION = "Ver. 0.2";
 const EXPECTED_PROTOCOL_VERSION = 2;
 const STATE_DIR = mkdtempSync(join(tmpdir(), "needlewhile-validate-"));
@@ -90,8 +92,8 @@ try {
   const codexHooks = json("hooks.json");
   const claudeHooks = json("hooks/claude-hooks.json");
   const claudeMarketplace = json(".claude-plugin/marketplace.json");
+  const codexMarketplace = json(".agents/plugins/marketplace.json");
   const mcpConfig = json(".mcp.json");
-  json(".agents/plugins/marketplace.json");
   pass("all manifests and hook files are valid JSON");
 
   assert(codexManifest.name === "needlewhile", "Codex manifest name mismatch");
@@ -110,7 +112,10 @@ try {
     "Needlewhile Portal MCP server entrypoint mismatch",
   );
   assert(claudeManifest.hooks === "./hooks/claude-hooks.json", "Claude hook path mismatch");
-  pass("runtime 0.4.2, design Ver. 0.2, and protocol 2 align across release manifests");
+  assert(codexMarketplace.name === "jieya", "standalone Codex marketplace name mismatch");
+  assert(codexMarketplace.plugins?.[0]?.name === "needlewhile", "standalone Codex plugin name mismatch");
+  assert(codexMarketplace.plugins?.[0]?.source?.path === "./", "standalone Codex marketplace path mismatch");
+  pass("runtime 0.4.3, design Ver. 0.2, and protocol 2 align across release manifests");
 
   const codexEvents = Object.keys(codexHooks.hooks);
   const supportedCodexEvents = new Set([
@@ -171,11 +176,50 @@ try {
   assert(skill.includes("Escape") && skill.includes("F11"), "SKILL.md does not document browser-reserved keys");
   pass("SKILL.md keeps minimal frontmatter and documents opt-in keyboard behavior");
 
-  for (const file of [SERVER, LIFECYCLE, CLIENT, AUDIO, OPENAI_ADAPTER_SERVER, OPENAI_ADAPTER_TEST]) {
+  for (const file of [
+    SERVER,
+    LIFECYCLE,
+    CLIENT,
+    AUDIO,
+    OPENAI_ADAPTER_SERVER,
+    OPENAI_ADAPTER_TEST,
+    CODEX_HOOK_DOCTOR,
+    CODEX_HOOK_DOCTOR_TEST,
+  ]) {
     const result = spawnSync(process.execPath, ["--check", file], { encoding: "utf8" });
     assert(result.status === 0, `${file} failed syntax check: ${result.stderr}`);
   }
-  pass("runtime, browser client, audio engine, and OpenAI MCP App adapter pass Node syntax checks");
+  pass("runtime, browser client, audio engine, Hook doctor, and OpenAI MCP App adapter pass Node syntax checks");
+
+  const hookDoctorSource = read("scripts/codex-hook-doctor.mjs").toString("utf8");
+  assert(hookDoctorSource.includes('method: "hooks/list"'), "Hook doctor does not inspect hooks/list");
+  assert(!hookDoctorSource.includes("config/batchWrite"), "Hook doctor must not write Hook trust");
+  assert(!hookDoctorSource.includes("dangerously-bypass-hook-trust"), "Hook doctor must not bypass Hook trust");
+  const hookDoctorTest = spawnSync(process.execPath, ["--test", CODEX_HOOK_DOCTOR_TEST], {
+    cwd: ROOT,
+    encoding: "utf8",
+    timeout: 20_000,
+  });
+  assert(hookDoctorTest.status === 0, `Hook doctor fixture tests failed: ${hookDoctorTest.stderr}`);
+  assert(hookDoctorTest.stdout.includes("# pass 9"), "Hook doctor did not pass all nine fixture tests");
+  pass("Hook doctor distinguishes ready, review-needed, and invalid installs without writing trust");
+
+  for (const installerPath of ["install.sh", "install.ps1"]) {
+    const installerSource = read(installerPath).toString("utf8");
+    assert(installerSource.includes("needlewhile@jieya"), `${installerPath} does not use the canonical plugin ID`);
+    assert(installerSource.includes("plugin remove") && installerSource.includes("needlewhile@needlewhile-local"), `${installerPath} does not migrate the legacy plugin ID`);
+    assert(installerSource.includes("codex-hook-doctor.mjs"), `${installerPath} does not run the Hook doctor`);
+    assert(installerSource.includes("codex://plugins/needlewhile@jieya"), `${installerPath} does not open the desktop review page`);
+    assert(installerSource.includes("NEEDLEWHILE_STATUS=pending"), `${installerPath} does not expose pending authorization`);
+    assert(installerSource.toLowerCase().includes("version mismatch"), `${installerPath} does not reject an outdated plugin version`);
+    assert(!installerSource.includes("trusted_hash"), `${installerPath} must not write trusted hashes`);
+    assert(!installerSource.includes("config/batchWrite"), `${installerPath} must not write Hook trust`);
+    assert(!installerSource.includes("dangerously-bypass-hook-trust"), `${installerPath} must not bypass Hook trust`);
+  }
+  if (process.platform !== "win32") {
+    assert((statSync(join(ROOT, "install.sh")).mode & 0o111) !== 0, "install.sh must remain executable");
+  }
+  pass("standalone installers require explicit Hook authorization before reporting ready");
 
   const openaiAdapterTest = spawnSync(process.execPath, [OPENAI_ADAPTER_TEST], {
     cwd: OPENAI_ADAPTER_DIR,

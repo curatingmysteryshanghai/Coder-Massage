@@ -52,4 +52,4 @@ Pass hook JSON on standard input. Prefer stable `session_id` plus `turn_id`/`run
 
 Run `status --verbose`. The controller keeps only its PID, port, random token, protocol version, and start time in a short-lived file under the operating system temporary directory. It requires Node.js 18 or newer and a local default browser.
 
-In Codex, installed hooks require user trust. Ask the user to open `/hooks`, inspect Needlewhile's commands, and enable them. Never bypass hook trust on their behalf.
+In Codex, installed hooks require user trust. The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in chat does not open Hook authorization; guide the user to **Settings → Plugins → Needlewhile → Review → Trust all**. In Codex CLI, use `/hooks` with the leading slash. Ask the user to inspect the commands, and treat installation as complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again. Never edit or bypass Hook trust on the user's behalf.

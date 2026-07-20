@@ -1,7 +1,7 @@
 {
   "name": "needlewhile",
   "displayName": "Needlewhile / 扎会儿",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "designVersion": "Ver. 0.2",
   "protocolVersion": 2,
   "buildDate": "2026-07-20",
@@ -28,6 +28,7 @@
     "claudeManifest": ".claude-plugin/plugin.json",
     "demo": "npm run demo",
     "open": "npm run open",
+    "codexHookDoctor": "node scripts/codex-hook-doctor.mjs",
     "validate": "npm run validate",
     "testOpenAIApp": "npm run test:openai-app"
   },

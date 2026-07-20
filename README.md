@@ -73,7 +73,11 @@ On Windows PowerShell:
 .\install.ps1 -Target codex
 ```
 
-Restart Codex, open `/hooks`, inspect the three Needlewhile commands, and trust them. The hooks update local state; they do not open a window. Ask Codex to “打开 Needlewhile 时空门” when you want to play.
+The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in the chat box does not open Hook authorization. Use **Settings → Plugins → Needlewhile → Review → Trust all**, after inspecting the commands. Installation is complete only when all three Needlewhile hooks show **Trusted**.
+
+In Codex CLI, use `/hooks` with the leading slash, inspect the same three commands, and trust them there. Installing or updating may change an exact command hash, which intentionally requires another review. Never edit or bypass Hook trust. The hooks update local state; they do not open a window. Ask Codex to “打开 Needlewhile 时空门” when you want to play.
+
+Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`. After trusting all three Hooks, rerun the installer or verify directly with `node games/needlewhile/scripts/codex-hook-doctor.mjs`.
 
 ## Install in Claude Code
 
@@ -129,7 +133,7 @@ Replace `workbuddy` with `coze` or another stable client name. Native packaging 
 ## Versions
 
 - Jieya/design release: **0.2.0 / Ver.0.2**
-- Needlewhile plugin/runtime: **0.4.2** (tiny borderless pixel-art Portal icon plus intrinsic-size reporting)
+- Needlewhile plugin/runtime: **0.4.3** (verified three-Hook trust handoff plus the tiny borderless pixel-art Portal)
 - Lifecycle protocol: **2**
 
 ## Repository layout

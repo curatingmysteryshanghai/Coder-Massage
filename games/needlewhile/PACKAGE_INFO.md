@@ -1,7 +1,7 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.2
+- Plugin/runtime version: 0.4.3
 - Lifecycle protocol: 2
 - Build date: 2026-07-20
 - Runtime: Node.js 18+
@@ -30,6 +30,8 @@
 ## Validation status
 
 The shared runtime is validated with Codex-shaped, Claude-shaped, WorkBuddy-shaped, and Coze-shaped lifecycle fixtures. Native hook packaging is supplied for Codex and Claude Code. Other clients use the documented command adapter when their local desktop or runner exposes lifecycle hooks; cloud-only sessions cannot reach a loopback browser UI.
+
+Codex Hook trust is a required user review. The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in chat does not open authorization; use **Settings → Plugins → Needlewhile → Review → Trust all**. In Codex CLI, use `/hooks` with the leading slash. Installation is complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again; trust must never be edited or bypassed.
 
 ## Privacy and window behavior
 

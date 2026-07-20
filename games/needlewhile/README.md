@@ -57,7 +57,11 @@ Windows PowerShell:
 
 The root marketplace catalogs install this plugin as `needlewhile@jieya`.
 
-After installing or updating in Codex, open `/hooks`, review the three Needlewhile commands, and trust them once. Exact command changes intentionally require a fresh review.
+The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in chat does not open Hook authorization. Go to **Settings → Plugins → Needlewhile → Review → Trust all**, inspect the commands, and confirm that all three Needlewhile hooks show **Trusted**. Only then is the Codex installation complete.
+
+In Codex CLI, use `/hooks` with the leading slash and review the same three commands. Installing or updating can change an exact command hash, so a previously trusted Hook may require review again. Never edit or bypass Hook trust.
+
+Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`. After trusting all three Hooks, rerun it or verify directly with `node scripts/codex-hook-doctor.mjs`.
 
 ## Lifecycle protocol
 
@@ -78,10 +82,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.2`
+- Plugin/runtime package: `0.4.3`
 - Lifecycle protocol: `2`
 
-Runtime 0.4.2 replaces the large narrated card with a generated pixel-art icon derived from the approved reference, removes the host border preference, and reports its compact intrinsic size.
+Runtime 0.4.3 keeps the approved compact pixel-art Portal and adds an installation check that only reports success after all three Codex hooks are trusted.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 
