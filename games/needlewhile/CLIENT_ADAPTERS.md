@@ -49,13 +49,13 @@ New generic adapters should always provide a stable per-turn run ID; this is wha
 The plugin keeps two surfaces separate:
 
 1. `hooks.json` updates the local lifecycle controller. On a successful, trusted, top-level Codex `UserPromptSubmit`, it returns official `hookSpecificOutput.additionalContext` asking Codex to call the Portal tool once. Other lifecycle events return `{}`. Hooks never start a browser.
-2. The local MCP Apps adapter exposes `show_needlewhile_portal`. The user may request it directly, and the trusted prompt hook may request it once at task start. Its bundled `text/html;profile=mcp-app` resource renders one generated transparent pixel-art Portal icon in a 44×44 surface, with no visible copy or card. Clicking it calls the host's vetted external-navigation API and opens the tokenized loopback game URL.
+2. The local MCP Apps adapter exposes `show_needlewhile_portal`. The user may request it directly, and the trusted prompt hook may request it once at task start. Its bundled `text/html;profile=mcp-app` resource renders one saturated transparent pixel-art Portal icon in a 44×44 surface, with no visible copy or card. Clicking it calls the host's vetted external-navigation API and opens the tokenized loopback game URL. Codex owns transcript layout, so this appears as its own compact chronological tool row; the plugin cannot mount inside the host-owned `已处理` divider.
 
 The widget directly bundles its HTML/CSS/JS resource and does not iframe a third-party page. The full game remains a normal local page because it needs sustained keyboard/pointer input, audio, and an SSE connection.
 
 ### Hook review and trust
 
-The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in the chat box does not open Hook authorization. Use **Settings → Plugins → Needlewhile → Review → Trust all**, after inspecting the commands. In Codex CLI, use `/hooks` with the leading slash. Installation is complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again. Never edit or bypass Hook trust.
+The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in the chat box does not open Hook authorization. Use **Settings → Plugins → Needlewhile → Review → Trust all**, after inspecting the commands. In Codex CLI, use `/hooks` with the leading slash. Hook authorization is complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again. Fully quit and reopen Codex once after install/update so existing projects reload the new Hook, skill, and MCP process. Never edit or bypass Hook trust.
 
 OpenAI's official references:
 

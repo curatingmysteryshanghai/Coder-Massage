@@ -14,7 +14,7 @@ const OPENAI_ADAPTER_SERVER = join(OPENAI_ADAPTER_DIR, "server.mjs");
 const OPENAI_ADAPTER_TEST = join(OPENAI_ADAPTER_DIR, "self-test.mjs");
 const CODEX_HOOK_DOCTOR = join(ROOT, "scripts", "codex-hook-doctor.mjs");
 const CODEX_HOOK_DOCTOR_TEST = join(ROOT, "scripts", "codex-hook-doctor.test.mjs");
-const EXPECTED_RUNTIME_VERSION = "0.4.3";
+const EXPECTED_RUNTIME_VERSION = "0.4.4";
 const EXPECTED_DESIGN_VERSION = "Ver. 0.2";
 const EXPECTED_PROTOCOL_VERSION = 2;
 const STATE_DIR = mkdtempSync(join(tmpdir(), "needlewhile-validate-"));
@@ -115,7 +115,7 @@ try {
   assert(codexMarketplace.name === "jieya", "standalone Codex marketplace name mismatch");
   assert(codexMarketplace.plugins?.[0]?.name === "needlewhile", "standalone Codex plugin name mismatch");
   assert(codexMarketplace.plugins?.[0]?.source?.path === "./", "standalone Codex marketplace path mismatch");
-  pass("runtime 0.4.3, design Ver. 0.2, and protocol 2 align across release manifests");
+  pass("runtime 0.4.4, design Ver. 0.2, and protocol 2 align across release manifests");
 
   const codexEvents = Object.keys(codexHooks.hooks);
   const supportedCodexEvents = new Set([
@@ -211,6 +211,8 @@ try {
     assert(installerSource.includes("codex-hook-doctor.mjs"), `${installerPath} does not run the Hook doctor`);
     assert(installerSource.includes("codex://plugins/needlewhile@jieya"), `${installerPath} does not open the desktop review page`);
     assert(installerSource.includes("NEEDLEWHILE_STATUS=pending"), `${installerPath} does not expose pending authorization`);
+    assert(installerSource.includes("Restart Codex once"), `${installerPath} does not require a post-install/update Codex restart`);
+    assert(installerSource.includes("already enabled at version"), `${installerPath} does not leave an enabled current version unchanged`);
     assert(installerSource.toLowerCase().includes("version mismatch"), `${installerPath} does not reject an outdated plugin version`);
     assert(!installerSource.includes("trusted_hash"), `${installerPath} must not write trusted hashes`);
     assert(!installerSource.includes("config/batchWrite"), `${installerPath} must not write Hook trust`);

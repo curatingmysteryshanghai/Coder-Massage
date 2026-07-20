@@ -35,6 +35,8 @@ for (const installer of rootInstallers) {
   assert(installer.includes("codex-hook-doctor.mjs"), "root installer must run the Hook doctor");
   assert(installer.includes("codex://plugins/needlewhile@jieya"), "root installer must open the desktop review page");
   assert(installer.includes("NEEDLEWHILE_STATUS=pending"), "root installer must expose pending authorization");
+  assert(installer.includes("Restart Codex once"), "root installer must require a post-install/update Codex restart");
+  assert(installer.includes("already enabled at version"), "root installer must leave an enabled current version unchanged");
   assert(installer.toLowerCase().includes("version mismatch"), "root installer must reject an outdated plugin version");
   assert(!installer.includes("trusted_hash"), "root installer must not write trusted hashes");
   assert(!installer.includes("config/batchWrite"), "root installer must not write Hook trust");

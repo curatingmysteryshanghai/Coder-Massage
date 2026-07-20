@@ -63,36 +63,38 @@ Result: passed for the local game surface
 - WorkBuddy's right-side local Web preview and a Coze custom Chat SDK host are documented adapter paths; neither client runtime is installed on this Mac for end-to-end UI testing.
 - Normal browsers may reject `window.close()` for a user-opened tab. The countdown and ending remain visible and switch to a clear manual-close message.
 
-## Inline MCP Portal mini redesign · runtime 0.4.2
+## Inline MCP Portal mini redesign · runtime 0.4.4
 
 ### Source and evidence
 
-- Approved source: the user-supplied generated image `截屏2026-07-20 12.36.50.png`.
-- Production asset: `adapters/openai-app/assets/portal-icon.png` (33 × 34 RGBA).
-- Exact browser resource capture: `design/preview-inline-portal-0.4.2.png` (the upper-left 44 × 44 pixels are the complete component).
-- Full source-versus-browser comparison: `design/inline-portal-reference-comparison-0.4.2.jpg`.
-- Render path: the MCP adapter's real `resources/read` HTML, including its embedded PNG data URI, served locally and inspected with the Codex in-app Browser.
+- Approved source: the user-supplied eight-frame `return-portal-entrance.gif`.
+- Production asset: `adapters/openai-app/assets/portal-icon.gif` (32 × 42 native animation, eight 80ms frames, six total passes under five seconds, embedded as a transparent data URI and displayed proportionally at 34px high).
+- Earlier exact resource capture: `design/preview-inline-portal-0.4.2.png`; runtime 0.4.4 supersedes its muted raster reduction with the recolored supplied animation.
+- Earlier source-versus-browser comparison: `design/inline-portal-reference-comparison-0.4.2.jpg`.
+- Render path: the MCP adapter's real `resources/read` HTML, including its embedded GIF data URI, served locally and inspected with the Codex in-app Browser.
 - QA surface: a temporary 200 × 120 preview viewport; measured component dimensions are fixed independently at 44 × 44.
 
 ### Visual comparison and required states
 
-- The implementation keeps the reference's dark stepped outline, cream/coral segmented rim, nested deep-teal vortex, and small plus-shaped pixel sparks.
+- The implementation keeps the supplied GIF's exact silhouette, eight-frame motion, transparency, and pixel construction while changing only its palette.
 - The component contains no visible text, card, title, description, background fill, or persistent border.
-- Ready state: one 44 × 44 transparent link with a 33 × 34 pixel-rendered image, centered at x 5.5 / y 5; the link receives the loopback URL from tool-result metadata.
-- Waiting state: the same geometry remains stable, `aria-disabled="true"` is exposed, and only opacity changes. It introduces no loading copy or layout shift.
-- Hover/active/focus/reduced-motion rules remain bounded to the 44 × 44 target. Pixel rendering is explicit; keyboard focus is visible without adding a resting border.
+- Ready state: one 44 × 44 transparent link with the proportionally scaled 34px-high GIF; the link receives the loopback URL from tool-result metadata.
+- Waiting state: the same geometry remains stable, `aria-disabled="true"` is exposed, and the supplied GIF animation continues without a gray filter, loading copy, or layout shift.
+- Hover/active/focus rules remain bounded to the 44 × 44 target. Reduced-motion preference swaps the GIF for its recolored static first frame; keyboard focus stays visible without adding a resting border.
 
 ### Functional and accessibility checks
 
 - The ready DOM exposes exactly one link named `打开 Needlewhile 时空门`; the decorative image has empty alt text.
-- Both the body and interactive surface measured 44 × 44, with transparent backgrounds and zero border width. The image measured exactly 33 × 34 and reported `image-rendering: pixelated`.
+- Both the body and interactive surface measure 44 × 44, with transparent backgrounds and zero border width. The image displays proportionally at 34px high and reports `image-rendering: pixelated`.
 - The widget emitted `ui/notifications/size-changed` and kept the compatibility intrinsic-height notification.
+- The current Codex host is asked to auto-expand the compact widget in its own chronological tool row. Codex exposes no plugin slot inside the host-owned `已处理` divider, so exact horizontal adjacency remains a host feature request.
 - The successful MCP result contained no visible content or structured narration; its loopback launch URL remained in widget-only `_meta`.
 - No browser console warnings or errors were recorded in waiting or ready states.
 
 ### QA history
 
 - Pass 1 preserved the compact borderless behavior but drifted toward a smooth textile illustration; the user rejected that art direction.
-- Pass 2 used the approved generated reference directly, restored deliberate pixel art, and passed the native-size browser comparison.
+- Pass 2 used the approved generated reference directly and restored deliberate pixel art.
+- Pass 3 replaces that sprite with the user's supplied eight-frame GIF, recolors only its original palette, and removes extra CSS motion and disabled grayscale treatment.
 
 Final result: passed

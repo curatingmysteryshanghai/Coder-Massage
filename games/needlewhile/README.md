@@ -57,11 +57,11 @@ Windows PowerShell:
 
 The root marketplace catalogs install this plugin as `needlewhile@jieya`.
 
-The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in chat does not open Hook authorization. Go to **Settings → Plugins → Needlewhile → Review → Trust all**, inspect the commands, and confirm that all three Needlewhile hooks show **Trusted**. Only then is the Codex installation complete.
+The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in chat does not open Hook authorization. Go to **Settings → Plugins → Needlewhile → Review → Trust all**, inspect the commands, and confirm that all three Needlewhile hooks show **Trusted**.
 
 In Codex CLI, use `/hooks` with the leading slash and review the same three commands. Installing or updating can change an exact command hash, so a previously trusted Hook may require review again. Never edit or bypass Hook trust.
 
-Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`. After trusting all three Hooks, rerun it or verify directly with `node scripts/codex-hook-doctor.mjs`.
+Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`. After trusting all three Hooks, verify directly with `node scripts/codex-hook-doctor.mjs`. When it reports ready, fully quit and reopen Codex once so existing projects reload the new Hook, skill, and MCP process, then start a fresh top-level task. Do not rerun the installer after the doctor succeeds.
 
 ## Lifecycle protocol
 
@@ -82,10 +82,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.3`
+- Plugin/runtime package: `0.4.4`
 - Lifecycle protocol: `2`
 
-Runtime 0.4.3 keeps the approved compact pixel-art Portal and adds an installation check that only reports success after all three Codex hooks are trusted.
+Runtime 0.4.4 keeps the approved compact pixel-art Portal, raises its warm/cool saturation, survives Codex cache moves during upgrades, and keeps installation gated on all three trusted Hooks.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 

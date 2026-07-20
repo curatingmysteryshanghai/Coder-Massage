@@ -1,7 +1,7 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.3
+- Plugin/runtime version: 0.4.4
 - Lifecycle protocol: 2
 - Build date: 2026-07-20
 - Runtime: Node.js 18+
@@ -22,7 +22,7 @@
 - Separate Codex and Claude Code plugin manifests and hooks
 - Generic command adapter contract for other local agent clients
 - Zero-dependency loopback game server and browser client
-- Generated transparent pixel-art Portal artwork sized for a 44px inline MCP surface
+- User-supplied eight-frame transparent pixel-art Portal GIF, palette-recolored for the 44px inline MCP surface
 - Layered procedural Web Audio needle tip, wool compression, and dry rustle sound
 - macOS/Linux shell installer and Windows PowerShell installer
 - Validator, design concept, browser screenshots, and SHA-256 manifests
@@ -31,7 +31,7 @@
 
 The shared runtime is validated with Codex-shaped, Claude-shaped, WorkBuddy-shaped, and Coze-shaped lifecycle fixtures. Native hook packaging is supplied for Codex and Claude Code. Other clients use the documented command adapter when their local desktop or runner exposes lifecycle hooks; cloud-only sessions cannot reach a loopback browser UI.
 
-Codex Hook trust is a required user review. The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in chat does not open authorization; use **Settings → Plugins → Needlewhile → Review → Trust all**. In Codex CLI, use `/hooks` with the leading slash. Installation is complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again; trust must never be edited or bypassed.
+Codex Hook trust is a required user review. The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in chat does not open authorization; use **Settings → Plugins → Needlewhile → Review → Trust all**. In Codex CLI, use `/hooks` with the leading slash. Hook authorization is complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again; trust must never be edited or bypassed. Fully quit and reopen Codex once after install/update so existing projects do not retain an older skill or MCP-process snapshot.
 
 ## Privacy and window behavior
 

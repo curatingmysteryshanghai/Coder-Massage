@@ -207,11 +207,17 @@ function Enable-CodexNeedlewhilePlugin {
     Write-Host "Re-enabled the installed Needlewhile Codex plugin."
   }
   else {
-    $null = & codex plugin add $CodexPluginId --json
-    if ($LASTEXITCODE -ne 0) {
-      throw "Could not synchronize the installed Needlewhile Codex plugin."
+    $InstalledVersion = [string]$Plugin.version
+    if ($InstalledVersion -eq $ExpectedCodexVersion) {
+      Write-Host "Needlewhile Codex plugin is already enabled at version $ExpectedCodexVersion."
     }
-    Write-Host "Synchronized the installed and enabled Needlewhile Codex plugin."
+    else {
+      $null = & codex plugin add $CodexPluginId --json
+      if ($LASTEXITCODE -ne 0) {
+        throw "Could not synchronize the installed Needlewhile Codex plugin."
+      }
+      Write-Host "Synchronized the installed and enabled Needlewhile Codex plugin."
+    }
   }
 
   $Verified = Get-CodexNeedlewhilePlugin
@@ -275,7 +281,8 @@ function Invoke-CodexHookDoctor {
 function Confirm-CodexHooks {
   Invoke-CodexHookDoctor
   if ($DoctorExitCode -eq 0) {
-    Write-Host "Needlewhile is ready for Codex: the plugin is enabled and all three Hooks are trusted."
+    Write-Host "Needlewhile Hooks are ready: the plugin is enabled and all three Hooks are trusted."
+    Write-Host "Restart Codex once now, then start a fresh top-level task to test the Portal; do not rerun this installer."
     return
   }
   if ($DoctorExitCode -ne 2) {
@@ -288,7 +295,8 @@ function Confirm-CodexHooks {
     $null = Read-Host "After choosing 'Trust all' in Codex, press Enter here to verify again"
     Invoke-CodexHookDoctor
     if ($DoctorExitCode -eq 0) {
-      Write-Host "Needlewhile is ready for Codex: the plugin is enabled and all three Hooks are trusted."
+      Write-Host "Needlewhile Hooks are ready: the plugin is enabled and all three Hooks are trusted."
+      Write-Host "Restart Codex once now, then start a fresh top-level task to test the Portal; do not rerun this installer."
       return
     }
     if ($DoctorExitCode -ne 2) {
@@ -298,7 +306,8 @@ function Confirm-CodexHooks {
 
   $script:CodexPending = $true
   Write-Warning "NEEDLEWHILE_STATUS=pending"
-  Write-Warning "Run this installer again after trusting all three Hooks; no trust settings were changed automatically."
+  Write-Warning "After trusting all three Hooks, verify with: node `"$CodexDoctor`" --cwd `"$RootDir`""
+  Write-Warning "When the doctor reports ready, restart Codex once; do not rerun this installer. No trust settings were changed automatically."
 }
 
 function Install-CodexNeedlewhile {

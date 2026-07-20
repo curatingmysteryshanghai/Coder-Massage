@@ -50,45 +50,31 @@
         transform-origin: 50% 52%;
         image-rendering: crisp-edges;
         image-rendering: pixelated;
-        animation: portal-breathe 2.4s steps(2, end) infinite;
-        transition: transform 90ms steps(1, end), filter 90ms steps(1, end), opacity 90ms linear;
+        transition: transform 90ms steps(1, end), opacity 90ms linear;
+      }
+
+      .portal-link picture {
+        display: block;
+        height: 34px;
       }
 
       .portal-link[aria-disabled="true"] .portal-icon {
-        opacity: .46;
-        filter: grayscale(.34) saturate(.72);
-        animation: portal-wait 1.5s steps(2, end) infinite;
+        opacity: .9;
       }
 
       .portal-link[aria-disabled="false"]:hover .portal-icon {
-        animation: none;
-        transform: translateY(-2px);
-        filter: brightness(1.12) saturate(1.06);
+        transform: translateY(-1px) scale(1.04);
       }
 
       .portal-link[aria-disabled="false"]:active .portal-icon {
-        animation: none;
         transform: translateY(1px);
       }
 
       .portal-link:focus-visible {
-        outline: 2px solid rgb(239 98 75 / .72);
+        outline: 2px solid Highlight;
         outline-offset: -2px;
       }
 
-      @keyframes portal-breathe {
-        0%, 100% { transform: translateY(0); filter: brightness(1); }
-        50% { transform: translateY(-1px); filter: brightness(1.08); }
-      }
-
-      @keyframes portal-wait {
-        0%, 100% { transform: translateY(0); opacity: .42; }
-        50% { transform: translateY(-1px); opacity: .58; }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .portal-icon { animation: none; }
-      }
     </style>
   </head>
   <body>
@@ -102,14 +88,20 @@
         aria-label="打开 Needlewhile 时空门"
         aria-disabled="true"
       >
-        <img
-          class="portal-icon"
-          src="__NEEDLEWHILE_PORTAL_ICON_DATA_URI__"
-          alt=""
-          width="33"
-          height="34"
-          draggable="false"
-        />
+        <picture>
+          <source
+            media="(prefers-reduced-motion: reduce)"
+            srcset="__NEEDLEWHILE_PORTAL_STATIC_ICON_DATA_URI__"
+          />
+          <img
+            class="portal-icon"
+            src="__NEEDLEWHILE_PORTAL_ICON_DATA_URI__"
+            alt=""
+            width="32"
+            height="42"
+            draggable="false"
+          />
+        </picture>
       </a>
     </main>
 
@@ -213,7 +205,7 @@
         const initializeBridge = async () => {
           try {
             await request("ui/initialize", {
-              appInfo: { name: "needlewhile-portal", version: "0.2.1" },
+              appInfo: { name: "needlewhile-portal", version: "0.2.2" },
               appCapabilities: { availableDisplayModes: ["inline"] },
               protocolVersion: APP_PROTOCOL_VERSION,
             });

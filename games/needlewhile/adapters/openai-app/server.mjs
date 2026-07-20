@@ -1,38 +1,42 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { access, cp, mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
 const ADAPTER_DIR = dirname(fileURLToPath(import.meta.url));
-const LIFECYCLE_PATH = join(
-  ADAPTER_DIR,
-  "..",
-  "..",
-  "skills",
-  "needlewhile",
-  "scripts",
-  "lifecycle.mjs",
-);
+const IMPORT_PLUGIN_ROOT = join(ADAPTER_DIR, "..", "..");
 const PORTAL_HTML_PATH = join(ADAPTER_DIR, "portal.html");
-const PORTAL_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.png");
-const RESOURCE_URI = "ui://needlewhile/portal-v0.2.1.html";
+const PORTAL_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.gif");
+const PORTAL_STATIC_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.png");
+const RESOURCE_URI = "ui://needlewhile/portal-v0.2.2.html";
 const RESOURCE_MIME_TYPE = "text/html;profile=mcp-app";
 const MCP_PROTOCOL_VERSION = "2025-11-25";
-const APP_VERSION = "0.2.1";
+const APP_VERSION = "0.2.2";
 const MAX_LINE_BYTES = 1024 * 1024;
 
-const [portalHtml, portalIcon] = await Promise.all([
+const [portalHtml, portalIcon, portalStaticIcon] = await Promise.all([
   readFile(PORTAL_HTML_PATH, "utf8"),
   readFile(PORTAL_ICON_PATH),
+  readFile(PORTAL_STATIC_ICON_PATH),
 ]);
-const widgetHtml = portalHtml.replace(
-  "__NEEDLEWHILE_PORTAL_ICON_DATA_URI__",
-  `data:image/png;base64,${portalIcon.toString("base64")}`,
-);
+const widgetHtml = portalHtml
+  .replace(
+    "__NEEDLEWHILE_PORTAL_ICON_DATA_URI__",
+    `data:image/gif;base64,${portalIcon.toString("base64")}`,
+  )
+  .replace(
+    "__NEEDLEWHILE_PORTAL_STATIC_ICON_DATA_URI__",
+    `data:image/png;base64,${portalStaticIcon.toString("base64")}`,
+  );
+const RUNTIME_SNAPSHOT_ROOT = await prepareRuntimeSnapshot();
+// Release the installed plugin directory before Codex moves or replaces its
+// cache. This is required on Windows, where a process cwd locks directory moves.
+process.chdir(RUNTIME_SNAPSHOT_ROOT);
 
 const tool = {
   name: "show_needlewhile_portal",
@@ -68,8 +72,11 @@ const resourceMeta = {
     },
     prefersBorder: false,
   },
+  "openai/widgetShowCodexWidgetInline": true,
+  "openai/widgetHeightHint": 44,
+  "openai/widgetMinFrameHeight": 44,
   "openai/widgetDescription":
-    "A tiny unlabeled borderless pixel-art time portal icon. It opens the local Needlewhile game only after the user clicks it; no accompanying narration is needed.",
+    "A tiny saturated unlabeled borderless pixel-art time portal icon. It opens the local Needlewhile game only after the user clicks it; no accompanying narration is needed.",
   "openai/widgetPrefersBorder": false,
   "openai/widgetCSP": {
     connect_domains: [],
@@ -78,6 +85,100 @@ const resourceMeta = {
     redirect_domains: ["http://127.0.0.1"],
   },
 };
+
+function safeLocalIdentity() {
+  const identity = typeof process.getuid === "function"
+    ? process.getuid()
+    : process.env.USERNAME ?? "user";
+  return String(identity).replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+async function prepareRuntimeSnapshot() {
+  const sourceRoot = join(IMPORT_PLUGIN_ROOT, "skills", "needlewhile");
+  const sourceDigest = await hashDirectory(sourceRoot);
+  const injectedSnapshotBase = process.env.NEEDLEWHILE_MCP_SNAPSHOT_BASE;
+  if (injectedSnapshotBase) {
+    await mkdir(injectedSnapshotBase, { recursive: true, mode: 0o700 });
+  }
+  const snapshotPrefix = injectedSnapshotBase
+    ? join(injectedSnapshotBase, `${APP_VERSION}-${sourceDigest.slice(0, 16)}-${process.pid}-`)
+    : join(tmpdir(), `needlewhile-mcp-runtime-${safeLocalIdentity()}-${APP_VERSION}-${sourceDigest.slice(0, 16)}-${process.pid}-`);
+  // mkdtemp atomically creates a private, unpredictable directory. Production
+  // never relies on a shared predictable parent under /tmp.
+  const snapshotRoot = await mkdtemp(snapshotPrefix);
+  try {
+    await cp(
+      sourceRoot,
+      join(snapshotRoot, "skills", "needlewhile"),
+      { recursive: true },
+    );
+    const snapshotDigest = await hashDirectory(join(snapshotRoot, "skills", "needlewhile"));
+    if (snapshotDigest !== sourceDigest) {
+      throw new Error("Needlewhile runtime snapshot integrity check failed");
+    }
+  } catch (error) {
+    await rm(snapshotRoot, { recursive: true, force: true });
+    throw error;
+  }
+  return snapshotRoot;
+}
+
+async function hashDirectory(root) {
+  const hash = createHash("sha256");
+
+  async function visit(directory, prefix = "") {
+    const entries = await readdir(directory, { withFileTypes: true });
+    entries.sort((left, right) => left.name.localeCompare(right.name, "en"));
+    for (const entry of entries) {
+      const relativeName = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const absoluteName = join(directory, entry.name);
+      if (entry.isDirectory()) {
+        hash.update(`D\0${relativeName}\0`);
+        await visit(absoluteName, relativeName);
+      } else if (entry.isFile()) {
+        const contents = await readFile(absoluteName);
+        hash.update(`F\0${relativeName}\0${contents.length}\0`);
+        hash.update(contents);
+      } else {
+        throw new Error(`Unsupported Needlewhile runtime entry: ${relativeName}`);
+      }
+    }
+  }
+
+  await visit(root);
+  return hash.digest("hex");
+}
+
+function lifecyclePathCandidates() {
+  const roots = [
+    RUNTIME_SNAPSHOT_ROOT,
+    process.env.CLAUDE_PLUGIN_ROOT,
+    // Startup moves cwd into the private snapshot. Resolve it at call time so
+    // later child processes inherit that upgrade-safe directory as well.
+    process.cwd(),
+    IMPORT_PLUGIN_ROOT,
+  ].filter((value) => typeof value === "string" && value.length > 0);
+
+  return [...new Set(roots)].map((root) => join(
+    root,
+    "skills",
+    "needlewhile",
+    "scripts",
+    "lifecycle.mjs",
+  ));
+}
+
+async function resolveLifecyclePath() {
+  for (const candidate of lifecyclePathCandidates()) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Continue through current cwd, environment, and import-path fallbacks.
+    }
+  }
+  throw new Error("Needlewhile was updated while Codex was open; restart Codex once and try again");
+}
 
 function stateDirectory() {
   if (process.env.NEEDLEWHILE_STATE_DIR) return process.env.NEEDLEWHILE_STATE_DIR;
@@ -99,11 +200,13 @@ function parseControllerState(raw) {
 }
 
 async function ensureLocalController() {
+  const lifecyclePath = await resolveLifecyclePath();
   await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
-      [LIFECYCLE_PATH, "open", "--no-window"],
+      [lifecyclePath, "open", "--no-window"],
       {
+        cwd: RUNTIME_SNAPSHOT_ROOT,
         env: {
           ...process.env,
           NEEDLEWHILE_NO_WINDOW: "1",
@@ -159,7 +262,7 @@ function failure(id, code, message, data) {
 function resourceDescriptor() {
   return {
     uri: RESOURCE_URI,
-    name: "needlewhile_portal_v0_2_1",
+    name: "needlewhile_portal_v0_2_2",
     title: "Needlewhile",
     description: "Tiny borderless pixel-art portal for entering the local Needlewhile game.",
     mimeType: RESOURCE_MIME_TYPE,

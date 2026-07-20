@@ -219,11 +219,16 @@ ensure_codex_plugin() {
       echo "Re-enabled the installed Needlewhile Codex plugin."
       ;;
     enabled)
-      if ! codex plugin add "$CODEX_PLUGIN_ID" --json >/dev/null; then
-        echo "Could not synchronize the installed Needlewhile Codex plugin." >&2
-        exit 70
+      installed_version=$(plugin_version)
+      if [ "$installed_version" = "$EXPECTED_CODEX_VERSION" ]; then
+        echo "Needlewhile Codex plugin is already enabled at version $EXPECTED_CODEX_VERSION."
+      else
+        if ! codex plugin add "$CODEX_PLUGIN_ID" --json >/dev/null; then
+          echo "Could not synchronize the installed Needlewhile Codex plugin." >&2
+          exit 70
+        fi
+        echo "Synchronized the installed and enabled Needlewhile Codex plugin."
       fi
-      echo "Synchronized the installed and enabled Needlewhile Codex plugin."
       ;;
     *)
       echo "Could not determine the Needlewhile plugin state." >&2
@@ -281,7 +286,8 @@ verify_codex_hooks() {
   run_codex_doctor || doctor_status=$?
 
   if [ "$doctor_status" -eq 0 ]; then
-    echo "Needlewhile is ready for Codex: the plugin is enabled and all three Hooks are trusted."
+    echo "Needlewhile Hooks are ready: the plugin is enabled and all three Hooks are trusted."
+    echo "Restart Codex once now, then start a fresh top-level task to test the Portal; do not rerun this installer."
     return
   fi
 
@@ -298,7 +304,8 @@ verify_codex_hooks() {
     doctor_status=0
     run_codex_doctor || doctor_status=$?
     if [ "$doctor_status" -eq 0 ]; then
-      echo "Needlewhile is ready for Codex: the plugin is enabled and all three Hooks are trusted."
+      echo "Needlewhile Hooks are ready: the plugin is enabled and all three Hooks are trusted."
+      echo "Restart Codex once now, then start a fresh top-level task to test the Portal; do not rerun this installer."
       return
     fi
     if [ "$doctor_status" -ne 2 ]; then
@@ -309,7 +316,8 @@ verify_codex_hooks() {
 
   CODEX_PENDING=1
   echo "NEEDLEWHILE_STATUS=pending" >&2
-  echo "Run this installer again after trusting all three Hooks; no trust settings were changed automatically." >&2
+  echo "After trusting all three Hooks, verify with: node \"$CODEX_DOCTOR\" --cwd \"$ROOT_DIR\"" >&2
+  echo "When the doctor reports ready, restart Codex once; do not rerun this installer. No trust settings were changed automatically." >&2
 }
 
 install_codex() {
