@@ -74,6 +74,7 @@ assert(rootReadme.includes("sh ./install.sh --codex"), "README must document the
 assert(rootReadme.includes("sh ./install.sh --verify"), "README must document the post-trust verification command");
 assert(rootReadme.includes("Automation boundary"), "README must document the owner-only Hook trust boundary");
 assert(rootReadme.includes("Upgrade an existing Codex installation"), "README must document upgrades");
+assert(rootReadme.includes("marketplace add magicfanshanghai-sys/jieya --ref main"), "README must document stale marketplace recovery");
 if (process.platform !== "win32") {
   for (const path of [join(ROOT, "install.sh"), join(GAME_DIR, "install.sh")]) {
     assert((statSync(path).mode & 0o111) !== 0, `${path} must remain executable`);

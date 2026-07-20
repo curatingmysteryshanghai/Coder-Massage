@@ -186,6 +186,18 @@ An upgrade may return exit `2` when Hook command hashes change. Repeat owner rev
 
 For Claude Code, update the same stable checkout, run `sh ./install.sh --claude` (or `.\install.ps1 -Target claude` on Windows), require exit `0`, and fully restart the local Claude Code client. The Codex `--verify` target does not verify Claude Code.
 
+## Troubleshooting an older pinned marketplace
+
+If installation reports a version mismatch after refreshing—for example, `expected 0.4.6, found 0.4.5`—the existing `jieya` Git marketplace may still be pinned to an old PR branch. Confirm the repository URL is exactly `magicfanshanghai-sys/jieya`, then rebuild only that marketplace snapshot on `main`:
+
+```bash
+codex plugin marketplace remove jieya --json
+codex plugin marketplace add magicfanshanghai-sys/jieya --ref main --json
+CI=1 sh ./install.sh --codex
+```
+
+This replaces the stale marketplace checkout; it does not approve Hooks. Apply it only to the resolved `jieya` marketplace, then follow the same exit `2` owner-review and `--verify` contract.
+
 ## Install in Claude Code
 
 Confirm `claude --version` works, then run from the repository root:
