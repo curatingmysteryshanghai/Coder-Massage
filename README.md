@@ -2,7 +2,7 @@
 
 ### Small tactile rituals for the time between a prompt and an answer.
 
-Jieya is a private collection of low-attention decompression games for people working with AI agents. The first playable game is **Needlewhile / 扎会儿**.
+Jieya is an early-access collection of low-attention decompression games for people working with AI agents. The first playable game is **Needlewhile / 扎会儿**.
 
 <p align="center">
   <img src="./games/needlewhile/design/preview.png" alt="Needlewhile Ver.0.2 pixel Portal and refined yarn-ball game" width="100%">
@@ -52,32 +52,74 @@ npm run demo
 Useful commands:
 
 ```bash
-npm run open
+npm --prefix games/needlewhile run open
 npm run status
 npm run stop
 npm run shutdown
 npm run validate
 ```
 
-## Install in Codex
+## Installation responsibilities
 
-This repository is currently private. A new user must first be granted GitHub access. Use an authenticated GitHub CLI session (`gh auth login`) for cloning, or a signed-in browser for ZIP download. Anonymous clone and ZIP download will fail until the repository is made public or a release package is shared separately.
+This guide is written so a person, Codex, or another AI assistant can perform the mechanical steps and recognize the exact point where the owner must take over.
 
-Check that `node --version` is 18 or newer and `codex --version` works in the same terminal, then clone and run one installer command:
+> **Automation boundary:** an AI assistant may check prerequisites, download the repository, run the installer, inspect its result, and run verification. Hook approval is an owner-only security action. The owner must inspect `UserPromptSubmit`, `PostToolUse`, and `Stop`. An assistant must never approve **Trust all** for the owner, edit Codex trust records, suppress validation, or bypass Hook trust.
+
+## Prerequisites
+
+- Node.js 18 or newer: `node --version`
+- Codex CLI on `PATH` for Codex installation: `codex --version`
+- Claude Code CLI on `PATH` only for the Claude target: `claude --version`
+- Git for cloning; GitHub CLI (`gh`) additionally supports authenticated private-repository cloning
+- A local default browser
+- PowerShell when installing on Windows
+
+No `npm install` or build step is required. `npm` is used only by demo and validation shortcuts.
+
+## Download the repository
+
+When the repository is public:
 
 ```bash
+git clone https://github.com/magicfanshanghai-sys/jieya.git
+cd jieya
+```
+
+When it is private, the account needs collaborator access:
+
+```bash
+gh auth login
 gh auth status
 gh repo clone magicfanshanghai-sys/jieya
 cd jieya
+```
+
+A browser download also works: open [the Jieya repository](https://github.com/magicfanshanghai-sys/jieya), choose **Code → Download ZIP**, extract it, and move or rename the extracted folder to a stable path before installing. A private repository may appear as `404` when the signed-in account lacks access. Keep this folder at the same absolute path; Codex records it as the local marketplace source for diagnostics and updates.
+
+## Install in Codex
+
+### macOS or Linux
+
+Run from the repository root:
+
+```bash
 sh ./install.sh --codex
 ```
 
-On macOS/Linux, a GitHub ZIP works too: unzip it, enter the extracted `jieya` folder, and run the same `sh ./install.sh --codex` command. No `npm install` or build step is needed. Keep the extracted or cloned folder at a stable path: Codex caches the installed plugin, while the configured local marketplace still points to this folder for diagnostics and updates.
+For an AI assistant or other non-interactive runner, prevent the installer from waiting for terminal input:
 
-On Windows PowerShell, after cloning or extracting the ZIP:
+```bash
+CI=1 sh ./install.sh --codex
+```
+
+### Windows PowerShell
+
+Run from the repository root:
 
 ```powershell
+$env:CI = "1"
 .\install.ps1 -Target codex
+$LASTEXITCODE
 ```
 
 If Windows blocks a downloaded script, use a process-scoped fallback:
@@ -86,11 +128,21 @@ If Windows blocks a downloaded script, use a process-scoped fallback:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Target codex
 ```
 
-The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in the chat box does not open Hook authorization. Use **Settings → Plugins → Needlewhile → Review → Trust all**, after inspecting the commands. Hook authorization is complete only when all three Needlewhile hooks show **Trusted**.
+### Interpret the installer result
 
-In Codex CLI, use `/hooks` with the leading slash, inspect the same three commands, and trust them there. Installing or updating may change an exact command hash, which intentionally requires another review. Never edit or bypass Hook trust. The hooks update local state; they do not open a window. Ask Codex to “打开 Needlewhile 时空门” when you want to play.
+- Exit `0`: the plugin is installed, enabled, and all three Hooks already verify as trusted.
+- Exit `2` with `NEEDLEWHILE_STATUS=pending`: expected owner handoff. The plugin is installed and enabled; Hook approval remains. Do not rerun the installer yet.
+- Any other nonzero exit: installation failed. Read the first error, correct the prerequisite, access, manifest, or marketplace problem, then retry once.
 
-Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`; this means the files are installed and only user authorization remains. After trusting all three Hooks, verify with:
+### Owner-only Hook review
+
+In Codex Desktop, the owner opens **Settings → Plugins → Needlewhile → Review**, inspects all three commands, and chooses **Trust all**. Typing `hooks` or `/hooks` in the Desktop chat does not open this screen.
+
+In Codex CLI, the owner uses `/hooks` with the leading slash and reviews the same commands. Installing or updating can change an exact command hash and require another review. The installer never writes or bypasses trust settings.
+
+### Verify, restart, and test
+
+After the owner completes Hook review:
 
 ```bash
 sh ./install.sh --verify
@@ -102,13 +154,43 @@ Windows PowerShell:
 .\install.ps1 -Target verify
 ```
 
-When verification reports ready, fully quit and reopen Codex once so existing projects discard old Hook, skill, and MCP-process snapshots. Start a fresh top-level task after the restart. The small inline time Portal should appear once for that task; clicking it opens a normal browser tab, and clicking the page Portal enters the game. Automatic browser launch is intentionally disabled.
+Verification must exit `0`. Fully quit every Codex Desktop window and reopen the app so old Hook, skill, and MCP snapshots are discarded. For Codex CLI or an IDE integration, end the current session and launch a fresh session. Start a new top-level task and ask `打开 Needlewhile 时空门`.
+
+In Codex Desktop, expect one small inline Portal and no automatic browser launch. Click it to open a normal default-browser tab, then click the page Portal to enter the game. In Codex CLI or an IDE, request the Portal explicitly and expect a normal browser/URL flow; an inline widget is not guaranteed.
+
+## Instructions for Codex and other AI assistants
+
+When asked to install Needlewhile for an owner:
+
+1. Confirm `node --version` is 18+ and `codex --version` works.
+2. Obtain the repository through the public, authenticated private, or ZIP route above and keep it at a stable path.
+3. Run `CI=1 sh ./install.sh --codex` on macOS/Linux, or the PowerShell equivalent on Windows.
+4. If the result is exit `2`, report that installation succeeded up to the security handoff. Direct the owner to review the three named Hooks. Never alter trust records yourself.
+5. After the owner confirms approval, run `sh ./install.sh --verify` and require exit `0`.
+6. Tell the owner to fully restart Codex, then guide the first-run test described above.
+7. If verification fails, run `node games/needlewhile/scripts/codex-hook-doctor.mjs --cwd "$PWD"` and report its exact status without exposing local tokens or changing trust.
+
+## Upgrade an existing Codex installation
+
+Git checkout:
+
+```bash
+cd /stable/path/to/jieya
+git pull --ff-only
+CI=1 sh ./install.sh --codex
+```
+
+ZIP installation: replace the repository contents at the same stable absolute path. Avoid extracting into a new folder such as `jieya-main (1)`, because the existing local marketplace still points to the original location.
+
+An upgrade may return exit `2` when Hook command hashes change. Repeat owner review, run `--verify`, and fully restart Codex.
+
+For Claude Code, update the same stable checkout, run `sh ./install.sh --claude` (or `.\install.ps1 -Target claude` on Windows), require exit `0`, and fully restart the local Claude Code client. The Codex `--verify` target does not verify Claude Code.
 
 ## Install in Claude Code
 
+Confirm `claude --version` works, then run from the repository root:
+
 ```bash
-gh repo clone magicfanshanghai-sys/jieya
-cd jieya
 sh ./install.sh --claude
 ```
 
@@ -118,7 +200,7 @@ On Windows PowerShell:
 .\install.ps1 -Target claude
 ```
 
-Claude Code additionally uses `StopFailure` and `SessionEnd` cleanup hooks. Ask Claude Code to open the Needlewhile Portal when you want the normal browser tab.
+Require exit `0`, fully exit and restart the local Claude Code client, then ask it to `Open the Needlewhile Portal`. Claude Code uses a normal browser entry and has no inline HTML widget guarantee. The `--verify` target currently verifies Codex only. Claude Code additionally uses `StopFailure` and `SessionEnd` cleanup hooks.
 
 ## Lifecycle and entry flow
 
@@ -134,18 +216,25 @@ A new turn replaces only the stale lease from the same client and session. A del
 
 ## Other agent clients
 
-The shared protocol accepts JSON on standard input and one command per lifecycle phase:
+The generic bridge has no automatic installer. From the repository root, pass hook JSON on standard input and use a stable client/session/run identity:
 
-```text
-node skills/needlewhile/scripts/lifecycle.mjs start     --client workbuddy
-node skills/needlewhile/scripts/lifecycle.mjs heartbeat --client workbuddy
-node skills/needlewhile/scripts/lifecycle.mjs stop      --client workbuddy
-node skills/needlewhile/scripts/lifecycle.mjs error     --client workbuddy
-node skills/needlewhile/scripts/lifecycle.mjs cleanup   --client workbuddy
-node skills/needlewhile/scripts/lifecycle.mjs open
+```bash
+printf '%s\n' '{"session_id":"demo-session","run_id":"turn-1","task_title":"Demo"}' \
+  | node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs start --client my-client
 ```
 
-Replace `workbuddy` with `coze` or another stable client name. Native packaging is included for Codex and Claude Code. WorkBuddy/扣子 adaptation uses this command bridge when the host offers local lifecycle hooks or command execution. A cloud-only bot cannot reach a user's loopback UI. See [`CLIENT_ADAPTERS.md`](./games/needlewhile/CLIENT_ADAPTERS.md).
+The shared protocol accepts one command per lifecycle phase:
+
+```text
+node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs start     --client workbuddy
+node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs heartbeat --client workbuddy
+node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs stop      --client workbuddy
+node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs error     --client workbuddy
+node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs cleanup   --client workbuddy
+node games/needlewhile/skills/needlewhile/scripts/lifecycle.mjs open
+```
+
+Replace `workbuddy` with `coze` or another stable client name and keep stable session/run IDs. Native packaging is included for Codex and Claude Code. WorkBuddy/扣子 adaptation uses this command bridge only when the host offers local lifecycle hooks or command execution. A cloud-only bot cannot reach a user's loopback UI. See [`CLIENT_ADAPTERS.md`](./games/needlewhile/CLIENT_ADAPTERS.md).
 
 ## Privacy and safety
 
@@ -178,4 +267,4 @@ MANIFEST.sha256                        Repository integrity hashes
 
 ## License
 
-MIT. The repository remains private while the collection is being developed.
+MIT. Repository visibility may change during controlled testing; the software remains an early-access development release.

@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "A private collection of tactile decompression minigames for AI waiting time.",
+  "description": "An early-access collection of tactile decompression minigames for AI waiting time.",
   "scripts": {
     "demo": "npm --prefix games/needlewhile run demo",
     "stop": "npm --prefix games/needlewhile run stop",

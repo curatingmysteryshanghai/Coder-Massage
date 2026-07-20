@@ -7,8 +7,8 @@ bc77b0edac559f9a4029afb2211a99265f15dcb2f3b36f8e8eee9ea776c158c9  ./.gitattribut
 9602a867d24500b819ba18b27c39f5fd11807255acb68473c8371edc66e03dd4  ./.mcp.json
 dbe98f8feab5700e1fbda474cb53f138f6b9aa0d1dba867dc4757e809bdbe39b  ./CLIENT_ADAPTERS.md
 7cf8c06425db30e7406a350db6c61f1fc84ccad250d645bcf6930b1cd5ed225f  ./LICENSE
-c634c4eb06f7eccf3de87990b659c2a84405c25c54af0ecdb047f44ebc1a6d8f  ./PACKAGE_INFO.md
-ca1d75564ae9254cf0954bf36ecd157c18468ef436f3f929fe4ab2e88ca20a1a  ./README.md
+450b5f442da20ef3aac10107c49681abe3132bdb95300fe8d0f93afce5bccc15  ./PACKAGE_INFO.md
+b231ef9c2d5af8c23546ffae43250f1d189acdc3af42775575e35a0e5d3d5ea4  ./README.md
 75ee37fcbecbc892b353c85e2f3010a1b6805f2ef11ea156764200ec92c6dae9  ./adapters/openai-app/README.md
 2cf2c2b905d838a1fb76c923b8be2f0df8cce376e73437be202530fec058da94  ./adapters/openai-app/assets/portal-icon.gif
 fc8cc33a58d7cc1475df9aa74737ad14ec08bb7b0a30fe4b1e86866a16a5d91a  ./adapters/openai-app/assets/portal-icon.png
@@ -32,10 +32,10 @@ b3db98dc76427d854045abbd0d330d61a07eb317a50a52717b6f18f1d38b719d  ./design/previ
 143a1156f86c38dad8650fdd89b54dde32ef7e0ff096924e9b7f963bf07b8597  ./install.ps1
 486738ea16c2b617ee61fc8aec63603e5c3a40476dec48401aeff6c021f11b46  ./install.sh
 98b3fd4748e8bfba18855f1635e6fa4996d59790f9ff3f4b71104ff2c3411243  ./package.json
-a0c576884054500fa9aaad635097c6a8b9759e555fb2b2a9c960ace08962391e  ./release-manifest.json
+f822c7366395a9b358d389e4d4b86c0ca90a1f91e994e26f469a194a930dccde  ./release-manifest.json
 9010765d010dcf77452c6b811babd460c9dc70b8718be2d27023540e68f57e6c  ./scripts/codex-hook-doctor.mjs
 f8f4f5fd8d49e750eb777a9eefd02528569da57efe4388e8310efe0e09b2d939  ./scripts/codex-hook-doctor.test.mjs
-339d304a4d55807cfc836c7ed444deace7c07730f47f56fd3240bede3ef3e6c4  ./scripts/validate.mjs
+fadb72b112f2b361e404f3b74a08af08b9e0842da49710974c2b90e30048cd36  ./scripts/validate.mjs
 2b056df965d7ae2951f2f57fb729dd03bb7641a21ace4fa42fc25de3a90f7ba9  ./skills/needlewhile/SKILL.md
 9a2e061474871cb84e1b842fa909e7a97e90608eb6f9f9d45164848c857d34db  ./skills/needlewhile/app/public/app.js
 cc9ef520ca742a8218cffb2fcb981494205c119468a5f0279dfb2587902ba728  ./skills/needlewhile/app/public/assets/pin-coral.png

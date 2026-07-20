@@ -11,7 +11,7 @@
     "browserPreference": ["system default"]
   },
   "installation": {
-    "repositoryAccess": "private GitHub repository access required",
+    "repositoryAccess": "public clone or authenticated private GitHub access",
     "shell": "sh ./install.sh --codex",
     "powershell": ".\\install.ps1 -Target codex",
     "verifyShell": "sh ./install.sh --verify",
