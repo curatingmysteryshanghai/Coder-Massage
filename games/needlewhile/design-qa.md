@@ -63,13 +63,13 @@ Result: passed for the local game surface
 - WorkBuddy's right-side local Web preview and a Coze custom Chat SDK host are documented adapter paths; neither client runtime is installed on this Mac for end-to-end UI testing.
 - Normal browsers may reject `window.close()` for a user-opened tab. The countdown and ending remain visible and switch to a clear manual-close message.
 
-## Inline MCP Portal mini redesign · runtime 0.4.4
+## Inline MCP Portal mini redesign · runtime 0.4.5
 
 ### Source and evidence
 
 - Approved source: the user-supplied eight-frame `return-portal-entrance.gif`.
 - Production asset: `adapters/openai-app/assets/portal-icon.gif` (32 × 42 native animation, eight 80ms frames, six total passes under five seconds, embedded as a transparent data URI and displayed proportionally at 34px high).
-- Earlier exact resource capture: `design/preview-inline-portal-0.4.2.png`; runtime 0.4.4 supersedes its muted raster reduction with the recolored supplied animation.
+- Earlier exact resource capture: `design/preview-inline-portal-0.4.2.png`; runtime 0.4.5 keeps the recolored supplied animation and routes its click through the app-only local launch tool.
 - Earlier source-versus-browser comparison: `design/inline-portal-reference-comparison-0.4.2.jpg`.
 - Render path: the MCP adapter's real `resources/read` HTML, including its embedded GIF data URI, served locally and inspected with the Codex in-app Browser.
 - QA surface: a temporary 200 × 120 preview viewport; measured component dimensions are fixed independently at 44 × 44.

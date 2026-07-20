@@ -26,6 +26,7 @@
       }
 
       .portal-link {
+        appearance: none;
         display: grid;
         width: 44px;
         height: 44px;
@@ -79,14 +80,13 @@
   </head>
   <body>
     <main class="portal-shell">
-      <a
+      <button
         class="portal-link"
         id="portal"
-        href="#"
-        target="_blank"
-        rel="noopener noreferrer"
+        type="button"
         aria-label="打开 Needlewhile 时空门"
         aria-disabled="true"
+        disabled
       >
         <picture>
           <source
@@ -102,7 +102,7 @@
             draggable="false"
           />
         </picture>
-      </a>
+      </button>
     </main>
 
     <script>
@@ -114,6 +114,17 @@
         let rpcId = 0;
         let sizeFrame = null;
         let portalHref = null;
+        let opening = false;
+        let hostSupportsServerTools = false;
+
+        const toolBridgeAvailable = () => hostSupportsServerTools
+          || typeof window.openai?.callTool === "function";
+
+        const syncPortalAvailability = () => {
+          const enabled = Boolean(portalHref) && toolBridgeAvailable() && !opening;
+          portal.setAttribute("aria-disabled", String(!enabled));
+          portal.disabled = !enabled;
+        };
 
         const isLoopbackHref = (value) => {
           try {
@@ -128,8 +139,7 @@
         const setPortalHref = (value) => {
           if (!isLoopbackHref(value)) return;
           portalHref = value;
-          portal.href = value;
-          portal.setAttribute("aria-disabled", "false");
+          syncPortalAvailability();
         };
 
         const applyToolResult = (result) => {
@@ -204,49 +214,49 @@
 
         const initializeBridge = async () => {
           try {
-            await request("ui/initialize", {
-              appInfo: { name: "needlewhile-portal", version: "0.2.2" },
+            const initialized = await request("ui/initialize", {
+              appInfo: { name: "needlewhile-portal", version: "0.2.3" },
               appCapabilities: { availableDisplayModes: ["inline"] },
               protocolVersion: APP_PROTOCOL_VERSION,
             });
+            hostSupportsServerTools = Boolean(initialized?.hostCapabilities?.serverTools);
+            syncPortalAvailability();
             notify("ui/notifications/initialized", {});
           } catch {
-            // ChatGPT's window.openai data path and the ordinary anchor remain available.
+            // ChatGPT's window.openai compatibility bridge may still be available.
+            syncPortalAvailability();
           } finally {
             reportSize();
           }
         };
 
-        portal.addEventListener("click", async (event) => {
-          if (portal.dataset.nativeFallback === "1") {
-            delete portal.dataset.nativeFallback;
-            return;
+        const callOpenGameTool = () => {
+          if (hostSupportsServerTools) {
+            return request("tools/call", {
+              name: "open_needlewhile_game",
+              arguments: {},
+            }, 10_000);
           }
-
-          if (!portalHref) {
-            event.preventDefault();
-            return;
+          if (typeof window.openai?.callTool === "function") {
+            return window.openai.callTool("open_needlewhile_game", {});
           }
+          return Promise.reject(new Error("This host cannot call Needlewhile's app-only tool"));
+        };
 
-          event.preventDefault();
+        portal.addEventListener("click", async () => {
+          if (!portalHref || opening || !toolBridgeAvailable()) return;
+
+          opening = true;
+          syncPortalAvailability();
           try {
-            const result = await request("ui/open-link", { url: portalHref }, 1_500);
-            if (!result?.isError) return;
+            const result = await callOpenGameTool();
+            if (result?.isError) throw new Error("Needlewhile launch failed");
           } catch {
-            // ChatGPT's compatibility bridge may still be available.
+            // Keep the compact Portal available so the user can retry.
+          } finally {
+            opening = false;
+            syncPortalAvailability();
           }
-
-          if (typeof window.openai?.openExternal === "function") {
-            try {
-              await window.openai.openExternal({ href: portalHref, redirectUrl: false });
-              return;
-            } catch {
-              // Fall through to the ordinary user-clicked link.
-            }
-          }
-
-          portal.dataset.nativeFallback = "1";
-          portal.click();
         });
 
         applyToolResult({

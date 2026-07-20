@@ -11,7 +11,7 @@ const defaultStateDir = join(tmpdir(), `needlewhile-${String(identity).replace(/
 const STATE_DIR = process.env.NEEDLEWHILE_STATE_DIR || defaultStateDir;
 const STATE_FILE = join(STATE_DIR, "server.json");
 const START_LOCK = join(STATE_DIR, "starting.lock");
-const VERSION = "0.4.4";
+const VERSION = "0.4.5";
 const PROTOCOL_VERSION = 2;
 const verbose = process.argv.includes("--verbose");
 const noWindow = process.argv.includes("--no-window") || process.env.NEEDLEWHILE_NO_WINDOW === "1";
@@ -25,6 +25,8 @@ const INLINE_PORTAL_CONTEXT = [
 const INLINE_PORTAL_TOOL_NAMES = new Set([
   "show_needlewhile_portal",
   "mcp__needlewhile_portal__show_needlewhile_portal",
+  "open_needlewhile_game",
+  "mcp__needlewhile_portal__open_needlewhile_game",
 ]);
 
 function log(message) {
@@ -207,22 +209,35 @@ async function sendControl(state, payload) {
 }
 
 function detach(command, args) {
-  try {
-    const child = spawn(command, args, { detached: true, stdio: "ignore" });
-    child.on("error", () => {});
-    child.unref();
-    return true;
-  } catch {
-    return false;
-  }
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawn(command, args, { detached: true, stdio: "ignore" });
+    } catch {
+      resolve(false);
+      return;
+    }
+
+    let settled = false;
+    const finish = (opened) => {
+      if (settled) return;
+      settled = true;
+      resolve(opened);
+    };
+    child.once("error", () => finish(false));
+    child.once("spawn", () => {
+      child.unref();
+      finish(true);
+    });
+  });
 }
 
-function openPortal(state) {
+async function openPortal(state) {
   const url = `http://127.0.0.1:${state.port}/#${state.token}`;
   if (noWindow) return true;
-  if (process.platform === "darwin") return detach("open", [url]);
-  if (process.platform === "win32") return detach("cmd", ["/c", "start", "", url]);
-  return detach("xdg-open", [url]);
+  if (process.platform === "darwin") return await detach("open", [url]);
+  if (process.platform === "win32") return await detach("cmd", ["/c", "start", "", url]);
+  return await detach("xdg-open", [url]);
 }
 
 function hookOutput(additionalContext = null) {
@@ -286,10 +301,10 @@ if (!state) {
 }
 
 if (action === "open") {
-  const opened = openPortal(state);
+  const opened = await openPortal(state);
   log(`open: ${opened ? "sent to the system default browser" : "failed"}`);
   hookOutput();
-  process.exit(0);
+  process.exit(opened ? 0 : 1);
 }
 
 const backgroundWork = Array.isArray(input.background_tasks) && input.background_tasks.length > 0;

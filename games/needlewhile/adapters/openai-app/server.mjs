@@ -13,10 +13,14 @@ const IMPORT_PLUGIN_ROOT = join(ADAPTER_DIR, "..", "..");
 const PORTAL_HTML_PATH = join(ADAPTER_DIR, "portal.html");
 const PORTAL_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.gif");
 const PORTAL_STATIC_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.png");
-const RESOURCE_URI = "ui://needlewhile/portal-v0.2.2.html";
+const RESOURCE_URI = "ui://needlewhile/portal-v0.2.3.html";
+const LEGACY_RESOURCE_URIS = new Set([
+  "ui://needlewhile/portal-v0.2.1.html",
+  "ui://needlewhile/portal-v0.2.2.html",
+]);
 const RESOURCE_MIME_TYPE = "text/html;profile=mcp-app";
 const MCP_PROTOCOL_VERSION = "2025-11-25";
-const APP_VERSION = "0.2.2";
+const APP_VERSION = "0.2.3";
 const MAX_LINE_BYTES = 1024 * 1024;
 
 const [portalHtml, portalIcon, portalStaticIcon] = await Promise.all([
@@ -38,7 +42,7 @@ const RUNTIME_SNAPSHOT_ROOT = await prepareRuntimeSnapshot();
 // cache. This is required on Windows, where a process cwd locks directory moves.
 process.chdir(RUNTIME_SNAPSHOT_ROOT);
 
-const tool = {
+const portalTool = {
   name: "show_needlewhile_portal",
   title: "Needlewhile",
   description:
@@ -60,6 +64,32 @@ const tool = {
       visibility: ["model"],
     },
     "openai/outputTemplate": RESOURCE_URI,
+    "openai/widgetAccessible": true,
+  },
+};
+
+const openGameTool = {
+  name: "open_needlewhile_game",
+  title: "Open Needlewhile",
+  description:
+    "Open the already-prepared local Needlewhile game in the system default browser after the user clicks the inline Portal.",
+  inputSchema: {
+    type: "object",
+    properties: {},
+    additionalProperties: false,
+  },
+  annotations: {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: false,
+  },
+  _meta: {
+    ui: {
+      visibility: ["app"],
+    },
+    "openai/widgetAccessible": true,
+    "openai/visibility": "private",
   },
 };
 
@@ -82,7 +112,7 @@ const resourceMeta = {
     connect_domains: [],
     resource_domains: [],
     frame_domains: [],
-    redirect_domains: ["http://127.0.0.1"],
+    redirect_domains: [],
   },
 };
 
@@ -200,16 +230,28 @@ function parseControllerState(raw) {
 }
 
 async function ensureLocalController() {
+  await runLifecycle(["open", "--no-window"], { noWindow: true });
+
+  const stateFile = join(stateDirectory(), "server.json");
+  const state = parseControllerState(await readFile(stateFile, "utf8"));
+  const loopbackOrigin = `http://127.0.0.1:${state.port}`;
+  return {
+    loopbackOrigin,
+    portalHref: `${loopbackOrigin}/#${state.token}`,
+  };
+}
+
+async function runLifecycle(args, { noWindow = false } = {}) {
   const lifecyclePath = await resolveLifecyclePath();
   await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
-      [lifecyclePath, "open", "--no-window"],
+      [lifecyclePath, ...args],
       {
         cwd: RUNTIME_SNAPSHOT_ROOT,
         env: {
           ...process.env,
-          NEEDLEWHILE_NO_WINDOW: "1",
+          NEEDLEWHILE_NO_WINDOW: noWindow ? "1" : "0",
         },
         // lifecycle.mjs reads hook data until EOF; an ignored stdin supplies EOF
         // immediately and avoids hanging a normal stdio MCP tool call.
@@ -239,14 +281,6 @@ async function ensureLocalController() {
       ));
     });
   });
-
-  const stateFile = join(stateDirectory(), "server.json");
-  const state = parseControllerState(await readFile(stateFile, "utf8"));
-  const loopbackOrigin = `http://127.0.0.1:${state.port}`;
-  return {
-    loopbackOrigin,
-    portalHref: `${loopbackOrigin}/#${state.token}`,
-  };
 }
 
 function success(id, result) {
@@ -262,7 +296,7 @@ function failure(id, code, message, data) {
 function resourceDescriptor() {
   return {
     uri: RESOURCE_URI,
-    name: "needlewhile_portal_v0_2_2",
+    name: "needlewhile_portal_v0_2_3",
     title: "Needlewhile",
     description: "Tiny borderless pixel-art portal for entering the local Needlewhile game.",
     mimeType: RESOURCE_MIME_TYPE,
@@ -288,6 +322,29 @@ async function callPortalTool() {
         {
           type: "text",
           text: `Needlewhile could not prepare its local portal: ${String(error.message ?? error)}`,
+        },
+      ],
+    };
+  }
+}
+
+async function callOpenGameTool() {
+  try {
+    await runLifecycle(["open", "--client", "codex"]);
+    return {
+      content: [],
+      _meta: {
+        launched: true,
+        launchMode: "system-default-browser",
+      },
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      content: [
+        {
+          type: "text",
+          text: `Needlewhile could not open its local game: ${String(error.message ?? error)}`,
         },
       ],
     };
@@ -322,26 +379,31 @@ async function dispatch(message) {
         description: "Tiny borderless inline portal for the local Needlewhile decompression game.",
       },
       instructions:
-        "Call show_needlewhile_portal after an explicit user request, or exactly once when the trusted Needlewhile UserPromptSubmit hook asks for the inline Portal on a top-level turn. Never repeat or narrate it during that turn. The tool never opens a browser by itself.",
+        "Call show_needlewhile_portal after an explicit user request, or exactly once when the trusted Needlewhile UserPromptSubmit hook asks for the inline Portal on a top-level turn. Never repeat or narrate it during that turn. The render tool never opens a browser; its app-only click action does so only after the user clicks.",
     });
   }
 
   if (method === "ping") return success(id, {});
 
   if (method === "tools/list") {
-    return success(id, { tools: [tool] });
+    return success(id, { tools: [portalTool, openGameTool] });
   }
 
   if (method === "tools/call") {
     const params = message.params;
-    if (!params || params.name !== tool.name) {
+    if (!params || ![portalTool.name, openGameTool.name].includes(params.name)) {
       return failure(id, -32602, "Unknown tool", { name: params?.name ?? null });
     }
     const args = params.arguments ?? {};
     if (!args || typeof args !== "object" || Array.isArray(args) || Object.keys(args).length > 0) {
-      return failure(id, -32602, "show_needlewhile_portal does not accept arguments");
+      return failure(id, -32602, `${params.name} does not accept arguments`);
     }
-    return success(id, await callPortalTool());
+    return success(
+      id,
+      params.name === portalTool.name
+        ? await callPortalTool()
+        : await callOpenGameTool(),
+    );
   }
 
   if (method === "resources/list") {
@@ -349,13 +411,14 @@ async function dispatch(message) {
   }
 
   if (method === "resources/read") {
-    if (message.params?.uri !== RESOURCE_URI) {
+    const requestedUri = message.params?.uri;
+    if (requestedUri !== RESOURCE_URI && !LEGACY_RESOURCE_URIS.has(requestedUri)) {
       return failure(id, -32002, "Resource not found", { uri: message.params?.uri ?? null });
     }
     return success(id, {
       contents: [
         {
-          uri: RESOURCE_URI,
+          uri: requestedUri,
           mimeType: RESOURCE_MIME_TYPE,
           text: widgetHtml,
           _meta: resourceMeta,

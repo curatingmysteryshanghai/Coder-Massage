@@ -1,7 +1,7 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.4
+- Plugin/runtime version: 0.4.5
 - Lifecycle protocol: 2
 - Build date: 2026-07-20
 - Runtime: Node.js 18+

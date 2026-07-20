@@ -82,10 +82,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.4`
+- Plugin/runtime package: `0.4.5`
 - Lifecycle protocol: `2`
 
-Runtime 0.4.4 keeps the approved compact pixel-art Portal, raises its warm/cool saturation, survives Codex cache moves during upgrades, and keeps installation gated on all three trusted Hooks.
+Runtime 0.4.5 keeps the approved compact pixel-art Portal and fixes entry from Codex: the click now invokes an app-only local launch tool instead of sending the dynamic HTTP loopback URL through Codex's HTTPS-only external-link bridge. It also keeps upgrade-safe runtime snapshots and installation gated on all three trusted Hooks.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 

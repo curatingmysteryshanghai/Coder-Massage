@@ -133,7 +133,7 @@ Replace `workbuddy` with `coze` or another stable client name. Native packaging 
 ## Versions
 
 - Jieya/design release: **0.2.0 / Ver.0.2**
-- Needlewhile plugin/runtime: **0.4.4** (verified three-Hook trust handoff, upgrade-safe click path, and the saturated borderless pixel-art Portal)
+- Needlewhile plugin/runtime: **0.4.5** (verified three-Hook trust handoff, app-only click launcher, and the saturated borderless pixel-art Portal)
 - Lifecycle protocol: **2**
 
 ## Repository layout
