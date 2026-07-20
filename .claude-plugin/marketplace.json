@@ -7,7 +7,7 @@
     {
       "name": "needlewhile",
       "source": "./games/needlewhile",
-      "description": "A tactile yarn-ball waiting toy for Codex and Claude Code turns."
+      "description": "An opt-in tactile yarn-ball Portal for local AI agent turns."
     }
   ]
 }

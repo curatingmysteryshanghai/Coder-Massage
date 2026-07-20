@@ -4,48 +4,108 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <meta name="color-scheme" content="light" />
-    <title>Needlewhile · 扎会儿</title>
+    <title>Needlewhile · 扎会儿 · Ver. 0.2</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body data-phase="idle">
+  <body data-phase="idle" data-entry="portal">
     <main
       class="toy"
       id="toy"
-      tabindex="0"
+      tabindex="-1"
       role="application"
       aria-label="扎会儿毛线球等待小游戏"
       aria-describedby="input-hint"
     >
-      <div class="status" aria-live="polite">
-        <span id="status-text">WAITING FOR AI</span>
-        <span class="pin-count" id="pin-count">000</span>
-      </div>
+      <section class="task-status" aria-live="polite" aria-label="当前任务状态">
+        <p class="eyeline">CURRENT TASK</p>
+        <h1 class="task-title" id="task-title">等待智能体任务</h1>
+        <dl class="task-facts">
+          <div>
+            <dt>状态</dt>
+            <dd id="phase-label">待机</dd>
+          </div>
+          <div>
+            <dt>用时</dt>
+            <dd id="elapsed-label">00:00</dd>
+          </div>
+          <div>
+            <dt>步骤</dt>
+            <dd id="tool-label">00</dd>
+          </div>
+          <div>
+            <dt>扎针</dt>
+            <dd id="pin-count">000</dd>
+          </div>
+        </dl>
+      </section>
 
-      <button class="sound-toggle" id="sound-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
-        <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
-          <path d="M15.1 8.6c1.7 1.7 1.7 5.1 0 6.8M17.7 6c3.2 3.3 3.2 8.7 0 12" />
-        </svg>
-        <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
-          <path d="m15.5 9 5 5m0-5-5 5" />
-        </svg>
-        <span id="sound-label">SOUND ON</span>
-      </button>
+      <p class="version-mark" aria-label="版本 0.2">NEEDLEWHILE / VER. 0.2</p>
+
+      <div class="pin-layer pin-layer--back" id="pin-layer-back" aria-hidden="true"></div>
 
       <section class="ball-stage" aria-label="毛线球">
         <img
           class="wool-ball"
           id="wool-ball"
-          src="/assets/wool-ball-teal.png?v=4"
-          alt="一团蓝绿色与奶油色交织的插画风毛线"
+          src="/assets/wool-ball-teal.png?v=5"
+          alt="一团蓝绿色与奶油色交织的细腻毛线"
           draggable="false"
         />
+        <div class="fiber-detail" aria-hidden="true"></div>
       </section>
 
-      <div class="pin-layer" id="pin-layer" aria-hidden="true"></div>
+      <div class="pin-layer pin-layer--front" id="pin-layer" aria-hidden="true"></div>
 
-      <p class="input-hint" id="input-hint">ANY KEY / ANY CLICK</p>
+      <section class="portal-gate" id="portal-gate" aria-labelledby="portal-title">
+        <button class="portal-button" id="portal-button" type="button">
+          <span class="portal-pixels" aria-hidden="true">
+            <span class="portal-ring portal-ring--outer"></span>
+            <span class="portal-ring portal-ring--middle"></span>
+            <span class="portal-ring portal-ring--inner"></span>
+            <span class="portal-core"></span>
+            <span class="portal-spark portal-spark--one"></span>
+            <span class="portal-spark portal-spark--two"></span>
+            <span class="portal-spark portal-spark--three"></span>
+            <span class="portal-spark portal-spark--four"></span>
+          </span>
+          <span class="portal-copy">
+            <strong id="portal-title">打开时空门</strong>
+            <span id="portal-subtitle">点一下，再进入扎会儿</span>
+          </span>
+        </button>
+      </section>
+
+      <section class="completion" id="completion" aria-live="assertive" aria-hidden="true">
+        <p class="completion-kicker">TANGLE COMPLETE</p>
+        <h2>这一轮完成了</h2>
+        <p id="completion-copy">让毛线和思绪一起停一下。</p>
+        <p class="countdown">页面将在 <strong id="close-countdown">08</strong> 秒后关闭</p>
+        <button class="close-now" id="close-now" type="button">现在关闭</button>
+        <span class="ending-vortex" aria-hidden="true"></span>
+      </section>
+
+      <div class="utility-controls">
+        <button class="icon-control sound-toggle" id="sound-toggle" type="button" aria-label="关闭声音" aria-pressed="false">
+          <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
+            <path d="M15.1 8.6c1.7 1.7 1.7 5.1 0 6.8M17.7 6c3.2 3.3 3.2 8.7 0 12" />
+          </svg>
+          <svg class="sound-off" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9.5v5h3.4l4.1 3.3V6.2L7.4 9.5H4Z" />
+            <path d="m15.5 9 5 5m0-5-5 5" />
+          </svg>
+          <span id="sound-label">声音</span>
+        </button>
+
+        <button class="icon-control palette-toggle" id="palette-toggle" type="button" aria-label="随机更换毛线球和背景配色">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10l-2.5-2.5M20 17H10l2.5 2.5M14 7l-2.5 2.5M10 17l2.5-2.5" />
+          </svg>
+          <span>换配色</span>
+        </button>
+      </div>
+
+      <p class="input-hint" id="input-hint">点击时空门进入 · ESC 保留给浏览器</p>
       <p class="sr-only" id="live-count" aria-live="polite"></p>
     </main>
     <script src="/app.js" type="module"></script>

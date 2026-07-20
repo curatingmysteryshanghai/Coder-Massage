@@ -1,0 +1,15 @@
+{
+  "name": "@jieya/needlewhile-openai-portal",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency stdio MCP Apps adapter for the Needlewhile opt-in pixel portal.",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node self-test.mjs --syntax-only",
+    "test": "node self-test.mjs"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
+}

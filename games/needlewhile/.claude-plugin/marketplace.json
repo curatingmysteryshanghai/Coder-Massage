@@ -7,8 +7,8 @@
     {
       "name": "needlewhile",
       "source": "./",
-      "description": "A tactile waiting toy for Claude Code turns.",
-      "version": "0.3.0"
+      "description": "An opt-in tactile Portal for Claude Code turns.",
+      "version": "0.4.0"
     }
   ]
 }

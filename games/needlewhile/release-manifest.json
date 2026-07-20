@@ -1,34 +1,41 @@
 {
   "name": "needlewhile",
   "displayName": "Needlewhile / 扎会儿",
-  "version": "0.3.0",
-  "buildDate": "2026-07-17",
+  "version": "0.4.0",
+  "designVersion": "Ver. 0.2",
+  "protocolVersion": 2,
+  "buildDate": "2026-07-20",
   "runtime": {
     "node": ">=18",
-    "browserPreference": [
-      "Google Chrome",
-      "Microsoft Edge",
-      "system default"
-    ]
+    "browserLaunch": "explicit opt-in only",
+    "browserPreference": ["system default"]
   },
   "targets": [
-    "Codex plugin",
-    "Claude Code plugin"
+    "Codex plugin with an opt-in MCP App Portal",
+    "Claude Code plugin",
+    "Generic local lifecycle adapter for WorkBuddy and Coze-compatible runners"
   ],
   "testedAndRecommended": {
     "codex": "tested on 0.145.0-alpha.18",
-    "claudeCode": "2.1.196 or newer recommended; schema validated, CLI not present on build machine"
+    "claudeCode": "2.1.196 or newer recommended; schema validated, CLI not present on build machine",
+    "genericAdapter": "protocol fixtures validated locally; host-specific hook registration remains client-managed"
   },
   "entrypoints": {
     "skill": "skills/needlewhile/SKILL.md",
     "codexManifest": ".codex-plugin/plugin.json",
+    "codexMcpApp": "adapters/openai-app/server.mjs",
+    "codexMcpConfig": ".mcp.json",
     "claudeManifest": ".claude-plugin/plugin.json",
     "demo": "npm run demo",
-    "validate": "npm run validate"
+    "open": "npm run open",
+    "validate": "npm run validate",
+    "testOpenAIApp": "npm run test:openai-app"
   },
   "privacy": {
     "remoteNetwork": false,
     "globalKeyboardCapture": false,
-    "analytics": false
+    "analytics": false,
+    "promptPersistence": false,
+    "taskLabelLifetime": "memory only"
   }
 }

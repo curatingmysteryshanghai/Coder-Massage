@@ -1,15 +1,15 @@
 {
-  "description": "Start Needlewhile when a Codex turn begins and stop it when the turn ends.",
+  "description": "Track Codex task state for Needlewhile without opening or taking over a browser.",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" start",
-            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" start",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" start --client codex",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" start --client codex",
             "timeout": 5,
-            "statusMessage": "Waking Needlewhile"
+            "statusMessage": "Tracking Needlewhile quietly"
           }
         ]
       }
@@ -19,8 +19,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" heartbeat",
-            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" heartbeat",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" heartbeat --client codex",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" heartbeat --client codex",
             "timeout": 3
           }
         ]
@@ -31,8 +31,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" stop",
-            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" stop",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" stop --client codex",
+            "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" stop --client codex",
             "timeout": 5,
             "statusMessage": "Letting the pins rest"
           }

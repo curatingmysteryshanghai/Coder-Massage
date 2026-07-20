@@ -33,11 +33,13 @@ for (const path of [
   join(ROOT, "games", "needlewhile", "README.md"),
   join(ROOT, "games", "needlewhile", "design", "preview.png"),
   join(ROOT, "games", "needlewhile", "design", "concept.png"),
+  join(ROOT, "games", "needlewhile", "design", "concept-ver-0.2.png"),
+  join(ROOT, "games", "needlewhile", "CLIENT_ADAPTERS.md"),
 ]) {
   assert(existsSync(path), `Missing collection file: ${path}`);
 }
 
-console.log("✓ Jieya collection catalogs and README assets are present");
+console.log("✓ Jieya Ver.0.2 catalogs, client matrix, and README assets are present");
 
 const child = spawnSync(process.execPath, [join(GAME_DIR, "scripts", "validate.mjs")], {
   cwd: GAME_DIR,

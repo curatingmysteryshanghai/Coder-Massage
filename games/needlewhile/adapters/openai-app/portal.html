@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Needlewhile Portal · Ver. 0.2</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --paper: var(--color-background-primary, #f4bd29);
+        --ink: var(--color-text-primary, #102f34);
+        --cream: #fff3cf;
+        --teal: #0a6d72;
+        --coral: #ef624b;
+        --mono: var(--font-mono, "SFMono-Regular", Consolas, monospace);
+        font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 10px;
+        color: var(--ink);
+        background: transparent;
+      }
+
+      .portal-card {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 132px;
+        min-height: 176px;
+        overflow: hidden;
+        border: 2px solid var(--ink);
+        border-radius: 0;
+        background: var(--paper);
+        box-shadow: 5px 5px 0 color-mix(in srgb, var(--ink) 30%, transparent);
+      }
+
+      .copy {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        padding: 18px 8px 18px 18px;
+      }
+
+      .eyebrow,
+      .status {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .11em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 20ch;
+        font-size: clamp(20px, 5.5vw, 29px);
+        line-height: .98;
+        letter-spacing: -.045em;
+      }
+
+      .hint {
+        margin: 0;
+        max-width: 34ch;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .status { color: color-mix(in srgb, var(--ink) 74%, transparent); }
+
+      .portal-link {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-width: 128px;
+        overflow: hidden;
+        border-left: 2px solid var(--ink);
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .portal-link[aria-disabled="true"] {
+        cursor: wait;
+        opacity: .72;
+      }
+
+      .vortex {
+        position: relative;
+        width: 96px;
+        height: 96px;
+        image-rendering: pixelated;
+      }
+
+      .ring,
+      .core,
+      .spark {
+        position: absolute;
+        display: block;
+      }
+
+      .ring {
+        inset: 9px;
+        border: 8px solid var(--teal);
+        border-top-color: var(--cream);
+        border-right-color: var(--coral);
+        box-shadow:
+          0 -8px 0 var(--ink),
+          8px 0 0 var(--cream),
+          0 8px 0 var(--coral),
+          -8px 0 0 var(--ink);
+        animation: spin 1.8s steps(8, end) infinite;
+      }
+
+      .ring.two {
+        inset: 27px;
+        border-width: 6px;
+        animation-direction: reverse;
+        animation-duration: 1.2s;
+      }
+
+      .core {
+        inset: 41px;
+        background: var(--ink);
+        box-shadow:
+          -8px -8px 0 var(--cream),
+          8px 8px 0 var(--coral);
+        animation: blink .8s steps(2, end) infinite;
+      }
+
+      .spark {
+        width: 7px;
+        height: 7px;
+        background: var(--cream);
+        box-shadow: 0 0 0 2px var(--ink);
+        animation: blink 1s steps(2, end) infinite;
+      }
+
+      .spark.a { top: 5px; left: 7px; }
+      .spark.b { right: 7px; bottom: 8px; animation-delay: .3s; }
+      .spark.c { top: 15px; right: 3px; background: var(--coral); animation-delay: .6s; }
+
+      .enter-label {
+        position: absolute;
+        right: 7px;
+        bottom: 7px;
+        left: 7px;
+        padding: 4px 3px;
+        border: 1px solid var(--ink);
+        background: var(--cream);
+        font-family: var(--mono);
+        font-size: 9px;
+        font-weight: 800;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .portal-link:focus-visible {
+        outline: 3px solid var(--cream);
+        outline-offset: -6px;
+      }
+
+      @keyframes spin { to { transform: rotate(1turn); } }
+      @keyframes blink { 50% { opacity: .35; } }
+
+      @media (max-width: 420px) {
+        .portal-card { grid-template-columns: minmax(0, 1fr) 112px; }
+        .copy { padding-left: 14px; }
+        .vortex { transform: scale(.86); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ring,
+        .core,
+        .spark { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="portal-card" aria-labelledby="portal-title">
+      <section class="copy">
+        <p class="eyebrow">Needlewhile · Ver. 0.2</p>
+        <h1 id="portal-title">给任务开一扇小门</h1>
+        <p class="hint">点击时空门才会打开游戏。不会全屏，也不会抢占或改动你的浏览器。</p>
+        <p class="status" id="status" aria-live="polite">正在准备本地入口…</p>
+      </section>
+
+      <a
+        class="portal-link"
+        id="portal"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="打开 Needlewhile 时空门"
+        aria-disabled="true"
+      >
+        <span class="vortex" aria-hidden="true">
+          <span class="ring one"></span>
+          <span class="ring two"></span>
+          <span class="core"></span>
+          <span class="spark a"></span>
+          <span class="spark b"></span>
+          <span class="spark c"></span>
+        </span>
+        <span class="enter-label" id="enter-label">准备中</span>
+      </a>
+    </main>
+
+    <script>
+      (() => {
+        const APP_PROTOCOL_VERSION = "2026-01-26";
+        const portal = document.getElementById("portal");
+        const status = document.getElementById("status");
+        const enterLabel = document.getElementById("enter-label");
+        const pending = new Map();
+        let rpcId = 0;
+        let portalHref = null;
+
+        const isLoopbackHref = (value) => {
+          try {
+            const url = new URL(value);
+            return url.protocol === "http:"
+              && ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+          } catch {
+            return false;
+          }
+        };
+
+        const setPortalHref = (value) => {
+          if (!isLoopbackHref(value)) return;
+          portalHref = value;
+          portal.href = value;
+          portal.setAttribute("aria-disabled", "false");
+          enterLabel.textContent = "进入时空门";
+          status.textContent = "入口已就绪 · 等你点击";
+        };
+
+        const applyToolResult = (result) => {
+          setPortalHref(
+            result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.portalHref
+            ?? result?.structuredContent?.portalHref
+            ?? result?.portalHref,
+          );
+        };
+
+        const notify = (method, params) => {
+          window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+        };
+
+        const request = (method, params, timeoutMs = 2_000) => new Promise((resolve, reject) => {
+          const id = ++rpcId;
+          const timer = globalThis.setTimeout(() => {
+            pending.delete(id);
+            reject(new Error(`${method} timed out`));
+          }, timeoutMs);
+          pending.set(id, {
+            resolve: (value) => {
+              globalThis.clearTimeout(timer);
+              resolve(value);
+            },
+            reject: (error) => {
+              globalThis.clearTimeout(timer);
+              reject(error);
+            },
+          });
+          window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+        });
+
+        window.addEventListener("message", (event) => {
+          if (event.source !== window.parent) return;
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") return;
+
+          if (message.id !== undefined && pending.has(message.id)) {
+            const waiter = pending.get(message.id);
+            pending.delete(message.id);
+            if (message.error) waiter.reject(message.error);
+            else waiter.resolve(message.result);
+            return;
+          }
+
+          if (message.method === "ui/notifications/tool-result") {
+            applyToolResult(message.params);
+          }
+        }, { passive: true });
+
+        const initializeBridge = async () => {
+          try {
+            await request("ui/initialize", {
+              appInfo: { name: "needlewhile-portal", version: "0.2.0" },
+              appCapabilities: { availableDisplayModes: ["inline"] },
+              protocolVersion: APP_PROTOCOL_VERSION,
+            });
+            notify("ui/notifications/initialized", {});
+          } catch {
+            // ChatGPT's window.openai data path and the ordinary anchor remain available.
+          }
+        };
+
+        portal.addEventListener("click", async (event) => {
+          if (portal.dataset.nativeFallback === "1") {
+            delete portal.dataset.nativeFallback;
+            return;
+          }
+
+          if (!portalHref) {
+            event.preventDefault();
+            status.textContent = "入口还在准备，请稍候";
+            return;
+          }
+
+          event.preventDefault();
+          try {
+            const result = await request("ui/open-link", { url: portalHref }, 1_500);
+            if (!result?.isError) return;
+          } catch {
+            // ChatGPT's compatibility bridge may still be available.
+          }
+
+          if (typeof window.openai?.openExternal === "function") {
+            try {
+              await window.openai.openExternal({ href: portalHref, redirectUrl: false });
+              return;
+            } catch {
+              // Fall through to the ordinary user-clicked link.
+            }
+          }
+
+          portal.dataset.nativeFallback = "1";
+          portal.click();
+        });
+
+        applyToolResult({
+          structuredContent: window.openai?.toolOutput,
+          toolResponseMetadata: window.openai?.toolResponseMetadata,
+        });
+
+        window.addEventListener("openai:set_globals", (event) => {
+          applyToolResult({
+            structuredContent: event.detail?.globals?.toolOutput,
+            toolResponseMetadata: event.detail?.globals?.toolResponseMetadata,
+          });
+        }, { passive: true });
+
+        void initializeBridge();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,52 +1,49 @@
-# Jieya
+# Jieya · Ver.0.2
 
 ### Small tactile rituals for the time between a prompt and an answer.
 
-Jieya is a private collection of low-attention decompression games for people using Codex and Claude Code. Each game is designed to occupy the hands without demanding a second train of thought, then react to the lifecycle of the active AI turn.
-
-The first playable game is **Needlewhile**.
+Jieya is a private collection of low-attention decompression games for people working with AI agents. The first playable game is **Needlewhile / 扎会儿**.
 
 <p align="center">
-  <img src="./games/needlewhile/design/preview.png" alt="Needlewhile running full-screen with a teal yarn ball and long illustrated needles on a warm yellow background" width="100%">
+  <img src="./games/needlewhile/design/preview.png" alt="Needlewhile Ver.0.2 pixel Portal and refined yarn-ball game" width="100%">
 </p>
 
-## Games
+## What changed in Ver.0.2
+
+- **Browser-safe opt-in:** task hooks quietly track state and never launch, maximize, resize, profile, or switch a browser. The system default browser opens a normal tab only after an explicit `open` command.
+- **Pixel time Portal:** the user chooses when to enter the game through a small animated time vortex.
+- **Browser keys stay usable:** `Escape`, `F11`, Tab, and modifier shortcuts never place needles.
+- **Concrete task state:** the upper-left readout shows a sanitized task label, agent client, elapsed time, tool steps, and pin count.
+- **A real ending:** the final lifecycle event starts an eight-second close countdown and pixel closing performance.
+- **More variation:** a control shuffles paired background/yarn palettes; needle targets cover the center, front face, rim, foreground, and background.
+- **Finer yarn:** a masked fiber layer adds delicate strands over the transparent illustrated ball.
+- **Safer multi-client runtime:** leases are namespaced by client/session/run, stale endings cannot kill replacement turns, and concurrent starts share a protocol-checked controller.
+
+## Game 01
 
 | No. | Game | Status | Ritual |
 | --- | --- | --- | --- |
-| 01 | **[Needlewhile / 扎会儿](./games/needlewhile/)** | Playable MVP | Press almost any key, left-click, or right-click to sink a needle into a floating yarn ball. |
-
-More games can join the collection as self-contained skills while sharing the same privacy and lifecycle principles.
-
-## Needlewhile
-
-Needlewhile turns an AI waiting period into a tiny, repeatable physical gesture:
-
-- A bright full-screen illustrated scene with no score, streak, timer, or reward loop.
-- Long, slender needles that gradually sink into the yarn so the interaction can continue indefinitely.
-- Layered procedural sound: a fine tip transient, soft wool compression, and a short dry rustle.
-- Keyboard, left-click, and right-click input.
-- Automatic freeze and audio stop when the active agent turn finishes.
-- Separate Codex and Claude Code hook manifests over one shared local game.
-
-The current art direction uses a solid butter-yellow field, cool teal and cream yarn, sparse corner copy, and hand-inked contours.
+| 01 | **[Needlewhile / 扎会儿](./games/needlewhile/)** | Ver.0.2 | Open the Portal when you want it, then click or press an ordinary key to sink a needle into the yarn. |
 
 <details>
-  <summary>Open the accepted visual concept</summary>
+  <summary>Open the Ver.0.2 visual concept</summary>
   <p align="center">
-    <img src="./games/needlewhile/design/concept.png" alt="Accepted visual concept for Needlewhile" width="100%">
+    <img src="./games/needlewhile/design/concept-ver-0.2.png" alt="Needlewhile Ver.0.2 visual concept" width="100%">
   </p>
 </details>
 
 ## Requirements
 
 - Node.js 18 or newer
-- Google Chrome or Microsoft Edge for the requested full-screen app window
-- Codex or Claude Code for automatic lifecycle hooks
+- A local default browser
+- Codex or Claude Code for bundled native lifecycle hooks
+- Any other local agent host capable of invoking lifecycle commands for the generic adapter
 
 There are no npm runtime dependencies and no build step.
 
 ## Run locally
+
+An explicit demo both starts a manual interval and opens the Portal:
 
 ```bash
 npm run demo
@@ -55,17 +52,14 @@ npm run demo
 Useful commands:
 
 ```bash
+npm run open
 npm run status
 npm run stop
 npm run shutdown
 npm run validate
 ```
 
-Press `Escape` to leave browser full-screen mode.
-
 ## Install in Codex
-
-Clone the private repository with an authenticated GitHub account:
 
 ```bash
 gh repo clone magicfanshanghai-sys/jieya
@@ -79,14 +73,7 @@ On Windows PowerShell:
 .\install.ps1 -Target codex
 ```
 
-Manual installation:
-
-```bash
-codex plugin marketplace add "$PWD"
-codex plugin add needlewhile@jieya
-```
-
-Restart Codex, open `/hooks`, inspect the three Needlewhile commands, and trust them. Needlewhile starts on `UserPromptSubmit`, refreshes its lease after tool calls, and freezes on `Stop`.
+Restart Codex, open `/hooks`, inspect the three Needlewhile commands, and trust them. The hooks update local state; they do not open a window. Ask Codex to “打开 Needlewhile 时空门” when you want to play.
 
 ## Install in Claude Code
 
@@ -102,39 +89,48 @@ On Windows PowerShell:
 .\install.ps1 -Target claude
 ```
 
-Manual installation:
+Claude Code additionally uses `StopFailure` and `SessionEnd` cleanup hooks. Ask Claude Code to open the Needlewhile Portal when you want the normal browser tab.
 
-```bash
-claude plugin validate "$PWD/games/needlewhile"
-claude plugin marketplace add "$PWD"
-claude plugin install needlewhile@jieya
-```
-
-Claude Code additionally uses `StopFailure` and `SessionEnd` cleanup hooks. Claude Code 2.1.196 or newer is recommended.
-
-## How the lifecycle works
+## Lifecycle and entry flow
 
 ```text
-prompt submitted
-      ↓
-local controller starts or refreshes a run lease
-      ↓
-Needlewhile opens and accepts input
-      ↓
-agent turn stops, fails, or ends
-      ↓
-sound fades out and the scene freezes
+prompt submitted ──► local state lease begins ──► agent works
+                              │
+explicit “open Portal” ───────┴──► default browser tab ─► click vortex ─► game
+                                                                  │
+turn ends ─────────────────────────────────────────────────────────┴──► countdown + ending
 ```
 
-A newly submitted turn in the same session replaces a stale interrupted-turn lease. Concurrent sessions remain independent.
+A new turn replaces only the stale lease from the same client and session. A delayed ending from an older run has no effect. Codex, Claude Code, and generic adapter clients can use identical session/run IDs without colliding.
+
+## Other agent clients
+
+The shared protocol accepts JSON on standard input and one command per lifecycle phase:
+
+```text
+node skills/needlewhile/scripts/lifecycle.mjs start     --client workbuddy
+node skills/needlewhile/scripts/lifecycle.mjs heartbeat --client workbuddy
+node skills/needlewhile/scripts/lifecycle.mjs stop      --client workbuddy
+node skills/needlewhile/scripts/lifecycle.mjs error     --client workbuddy
+node skills/needlewhile/scripts/lifecycle.mjs cleanup   --client workbuddy
+node skills/needlewhile/scripts/lifecycle.mjs open
+```
+
+Replace `workbuddy` with `coze` or another stable client name. Native packaging is included for Codex and Claude Code. WorkBuddy/扣子 adaptation uses this command bridge when the host offers local lifecycle hooks or command execution. A cloud-only bot cannot reach a user's loopback UI. See [`CLIENT_ADAPTERS.md`](./games/needlewhile/CLIENT_ADAPTERS.md).
 
 ## Privacy and safety
 
-- The controller binds only to `127.0.0.1`.
-- A random access token is stored under the operating system temporary directory.
-- Prompt content is never saved or displayed.
-- There is no global keyboard monitoring or Accessibility permission.
-- There are no analytics, accounts, ads, scores, or remote game services.
+- The controller binds only to `127.0.0.1` and uses a random access token.
+- The sanitized task label is capped at 88 characters and stays in controller memory.
+- Raw prompt text is never written to disk.
+- No global keyboard monitoring, Accessibility permission, analytics, accounts, ads, or remote game service.
+- The persistent discovery file contains only PID, port, token, version, protocol version, and startup time.
+
+## Versions
+
+- Jieya/design release: **0.2.0 / Ver.0.2**
+- Needlewhile plugin/runtime: **0.4.0** (advanced from the existing 0.3.0; no semantic-version downgrade)
+- Lifecycle protocol: **2**
 
 ## Repository layout
 
@@ -144,40 +140,13 @@ A newly submitted turn in the same session replaces a stale interrupted-turn lea
 games/needlewhile/                     Self-contained Game 01 plugin
 games/needlewhile/.codex-plugin/       Codex plugin manifest
 games/needlewhile/.claude-plugin/      Claude Code plugin manifest
-games/needlewhile/skills/              Shared skill and local game
-games/needlewhile/design/              Concept and implementation preview
+games/needlewhile/skills/              Shared skill, bridge, and local game
+games/needlewhile/design/              Concepts and browser-verified preview
 scripts/validate.mjs                   Collection validator
 install.sh / install.ps1               Collection installers
 MANIFEST.sha256                        Repository integrity hashes
 ```
 
-## Validation
-
-The current release passes 11 automated checks covering:
-
-- plugin and hook schemas
-- JavaScript syntax
-- production image assets
-- bounded and decaying procedural audio data
-- full-screen launch flags
-- normal, concurrent, background, and interrupted-turn lifecycle paths
-- loopback server delivery
-
-The interface was also checked at `1586 × 992` and `390 × 844`, including dense needle states, sound toggling, right-click input, and input lock after completion. See [`design-qa.md`](./games/needlewhile/design-qa.md) for the full record.
-
-The current build was validated on macOS with Node.js 22 and Codex CLI. The Claude Code manifest and hook schema were validated with Claude-shaped lifecycle fixtures; the Claude Code CLI and Windows/Linux runtime paths were not executed end-to-end on the build machine. See [`PACKAGE_INFO.md`](./games/needlewhile/PACKAGE_INFO.md) for the tested boundary.
-
-## Current boundary
-
-Chrome and Edge are asked to open Needlewhile as a full-screen browser app. A normal browser tab remains the fallback and cannot guarantee its launch mode. A future native shell can add a menu-bar or tray icon, always-on-top behavior, and signed macOS and Windows installers without changing the game protocol.
-
-## Roadmap
-
-- Add more one-gesture waiting games to the Jieya collection.
-- Introduce a lightweight game picker without adding attention-heavy progression systems.
-- Explore a native shell for stronger cross-platform window control.
-- Add optional local sound preferences shared across sessions.
-
 ## License
 
-MIT. The repository is currently private while the collection is being developed.
+MIT. The repository remains private while the collection is being developed.
