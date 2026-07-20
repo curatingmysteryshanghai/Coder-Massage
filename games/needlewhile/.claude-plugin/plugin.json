@@ -1,7 +1,7 @@
 {
   "name": "needlewhile",
-  "version": "0.3.0",
-  "description": "A warm yarn-ball waiting toy that runs while Claude Code works.",
+  "version": "0.4.4",
+  "description": "An opt-in warm yarn-ball Portal for the time while Claude Code works.",
   "author": {
     "name": "Magic Fan"
   },

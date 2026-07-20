@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Needlewhile</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      html,
+      body {
+        margin: 0;
+        width: 44px;
+        height: 44px;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      body { display: inline-flex; }
+
+      .portal-shell {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+      }
+
+      .portal-link {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        text-decoration: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .portal-link[aria-disabled="true"] {
+        cursor: wait;
+      }
+
+      .portal-icon {
+        display: block;
+        width: auto;
+        height: 34px;
+        transform-origin: 50% 52%;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+        transition: transform 90ms steps(1, end), opacity 90ms linear;
+      }
+
+      .portal-link picture {
+        display: block;
+        height: 34px;
+      }
+
+      .portal-link[aria-disabled="true"] .portal-icon {
+        opacity: .9;
+      }
+
+      .portal-link[aria-disabled="false"]:hover .portal-icon {
+        transform: translateY(-1px) scale(1.04);
+      }
+
+      .portal-link[aria-disabled="false"]:active .portal-icon {
+        transform: translateY(1px);
+      }
+
+      .portal-link:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <main class="portal-shell">
+      <a
+        class="portal-link"
+        id="portal"
+        href="#"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="打开 Needlewhile 时空门"
+        aria-disabled="true"
+      >
+        <picture>
+          <source
+            media="(prefers-reduced-motion: reduce)"
+            srcset="__NEEDLEWHILE_PORTAL_STATIC_ICON_DATA_URI__"
+          />
+          <img
+            class="portal-icon"
+            src="__NEEDLEWHILE_PORTAL_ICON_DATA_URI__"
+            alt=""
+            width="32"
+            height="42"
+            draggable="false"
+          />
+        </picture>
+      </a>
+    </main>
+
+    <script>
+      (() => {
+        const APP_PROTOCOL_VERSION = "2026-01-26";
+        const portal = document.getElementById("portal");
+        const portalShell = document.querySelector(".portal-shell");
+        const pending = new Map();
+        let rpcId = 0;
+        let sizeFrame = null;
+        let portalHref = null;
+
+        const isLoopbackHref = (value) => {
+          try {
+            const url = new URL(value);
+            return url.protocol === "http:"
+              && ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname);
+          } catch {
+            return false;
+          }
+        };
+
+        const setPortalHref = (value) => {
+          if (!isLoopbackHref(value)) return;
+          portalHref = value;
+          portal.href = value;
+          portal.setAttribute("aria-disabled", "false");
+        };
+
+        const applyToolResult = (result) => {
+          setPortalHref(
+            result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.call_tool_result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.mcp_tool_result?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.callToolResult?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.mcpToolResult?._meta?.portalHref
+            ?? result?.toolResponseMetadata?.portalHref
+            ?? result?.structuredContent?.portalHref
+            ?? result?.portalHref,
+          );
+        };
+
+        const notify = (method, params) => {
+          window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+        };
+
+        const reportSize = () => {
+          if (sizeFrame !== null) return;
+          sizeFrame = globalThis.requestAnimationFrame(() => {
+            sizeFrame = null;
+            const rect = portalShell.getBoundingClientRect();
+            const width = Math.ceil(rect.width);
+            const height = Math.ceil(rect.height);
+            notify("ui/notifications/size-changed", { width, height });
+            try {
+              window.openai?.notifyIntrinsicHeight?.(height);
+            } catch {
+              // The standard MCP Apps size notification remains the baseline path.
+            }
+          });
+        };
+
+        const request = (method, params, timeoutMs = 2_000) => new Promise((resolve, reject) => {
+          const id = ++rpcId;
+          const timer = globalThis.setTimeout(() => {
+            pending.delete(id);
+            reject(new Error(`${method} timed out`));
+          }, timeoutMs);
+          pending.set(id, {
+            resolve: (value) => {
+              globalThis.clearTimeout(timer);
+              resolve(value);
+            },
+            reject: (error) => {
+              globalThis.clearTimeout(timer);
+              reject(error);
+            },
+          });
+          window.parent.postMessage({ jsonrpc: "2.0", id, method, params }, "*");
+        });
+
+        window.addEventListener("message", (event) => {
+          if (event.source !== window.parent) return;
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") return;
+
+          if (message.id !== undefined && pending.has(message.id)) {
+            const waiter = pending.get(message.id);
+            pending.delete(message.id);
+            if (message.error) waiter.reject(message.error);
+            else waiter.resolve(message.result);
+            return;
+          }
+
+          if (message.method === "ui/notifications/tool-result") {
+            applyToolResult(message.params);
+          }
+        }, { passive: true });
+
+        const initializeBridge = async () => {
+          try {
+            await request("ui/initialize", {
+              appInfo: { name: "needlewhile-portal", version: "0.2.2" },
+              appCapabilities: { availableDisplayModes: ["inline"] },
+              protocolVersion: APP_PROTOCOL_VERSION,
+            });
+            notify("ui/notifications/initialized", {});
+          } catch {
+            // ChatGPT's window.openai data path and the ordinary anchor remain available.
+          } finally {
+            reportSize();
+          }
+        };
+
+        portal.addEventListener("click", async (event) => {
+          if (portal.dataset.nativeFallback === "1") {
+            delete portal.dataset.nativeFallback;
+            return;
+          }
+
+          if (!portalHref) {
+            event.preventDefault();
+            return;
+          }
+
+          event.preventDefault();
+          try {
+            const result = await request("ui/open-link", { url: portalHref }, 1_500);
+            if (!result?.isError) return;
+          } catch {
+            // ChatGPT's compatibility bridge may still be available.
+          }
+
+          if (typeof window.openai?.openExternal === "function") {
+            try {
+              await window.openai.openExternal({ href: portalHref, redirectUrl: false });
+              return;
+            } catch {
+              // Fall through to the ordinary user-clicked link.
+            }
+          }
+
+          portal.dataset.nativeFallback = "1";
+          portal.click();
+        });
+
+        applyToolResult({
+          structuredContent: window.openai?.toolOutput,
+          toolResponseMetadata: window.openai?.toolResponseMetadata,
+        });
+
+        window.addEventListener("openai:set_globals", (event) => {
+          applyToolResult({
+            structuredContent: event.detail?.globals?.toolOutput,
+            toolResponseMetadata: event.detail?.globals?.toolResponseMetadata,
+          });
+        }, { passive: true });
+
+        if (typeof ResizeObserver === "function") {
+          new ResizeObserver(reportSize).observe(portalShell);
+        }
+        reportSize();
+        void initializeBridge();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "needlewhile",
-  "version": "0.3.0",
-  "description": "A warm yarn-ball waiting toy that runs while Codex works.",
+  "version": "0.4.4",
+  "description": "An opt-in warm yarn-ball Portal for the time while Codex works.",
   "author": {
     "name": "Magic Fan"
   },
@@ -13,19 +13,20 @@
     "yarn",
     "hooks"
   ],
+  "mcpServers": "./.mcp.json",
   "skills": "./skills/",
   "hooks": "./hooks.json",
   "interface": {
     "displayName": "Needlewhile / 扎会儿",
     "shortDescription": "A tactile yarn-ball toy for the time between prompt and answer.",
-    "longDescription": "Needlewhile opens a bright full-screen yarn-ball toy while Codex is working. Click or press a key to sink long illustrated needles into a floating teal yarn ball with a dry, procedural wool rustle; the toy freezes when the turn ends.",
+    "longDescription": "Needlewhile quietly tracks a Codex turn and asks the host to render one tiny borderless textile Portal icon at task start. Click it to enter the local fine-fiber yarn toy, shuffle color palettes, watch live task state, and see a closing performance when the turn ends.",
     "developerName": "Magic Fan",
     "category": "Productivity",
     "capabilities": [
       "Interactive"
     ],
     "defaultPrompt": [
-      "Open Needlewhile for this task.",
+      "Open the Needlewhile Portal for this task.",
       "Check whether the Needlewhile companion is running.",
       "Stop the current Needlewhile round."
     ],

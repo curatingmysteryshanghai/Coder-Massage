@@ -18,9 +18,11 @@ mkdirSync(STATE_DIR, { recursive: true, mode: 0o700 });
 
 const STATE_FILE = join(STATE_DIR, "server.json");
 const TOKEN = randomBytes(24).toString("hex");
-const VERSION = "0.3.0";
+const VERSION = "0.4.4";
+const DISPLAY_VERSION = "Ver. 0.2";
+const PROTOCOL_VERSION = 2;
 const MAX_BODY_BYTES = 16 * 1024;
-const SIX_HOURS = 6 * 60 * 60 * 1000;
+const ONE_HOUR = 60 * 60 * 1000;
 const FIVE_MINUTES = 5 * 60 * 1000;
 
 const staticFiles = new Map([
@@ -42,26 +44,63 @@ let lastError = null;
 let lastActivityAt = Date.now();
 let completedAt = null;
 let shutdownRequested = false;
+let lastSummary = null;
+let nextRoundRevision = 0;
+let currentRoundRevision = 0;
 
-function normalizePart(value, fallback) {
+function normalizePart(value, fallback, limit = 180) {
   if (typeof value !== "string" || value.length === 0) return fallback;
-  return value.slice(0, 180);
+  return value
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, limit) || fallback;
 }
 
 function runKey(control) {
+  const clientKind = normalizePart(control.clientKind, "generic", 32);
   const sessionId = normalizePart(control.sessionId, "manual");
   const runId = normalizePart(control.runId, "current");
-  return `${sessionId}:${runId}`;
+  return `${clientKind}:${sessionId}:${runId}`;
+}
+
+function newestRun(runs = [...activeRuns.values()]) {
+  return runs.reduce((latest, run) => (
+    !latest
+    || run.heartbeatAt > latest.heartbeatAt
+    || (run.heartbeatAt === latest.heartbeatAt && run.roundRevision > latest.roundRevision)
+      ? run
+      : latest
+  ), null);
+}
+
+function summaryFromRun(run) {
+  if (!run) return null;
+  return {
+    clientKind: run.clientKind,
+    taskTitle: run.taskTitle,
+    toolSteps: run.toolSteps,
+    currentTool: run.currentTool,
+    startedAt: run.startedAt,
+    roundRevision: run.roundRevision,
+  };
 }
 
 function stateForClient() {
+  const runs = [...activeRuns.values()];
+  const focus = newestRun(runs) ?? lastSummary;
   return {
     version: VERSION,
+    displayVersion: DISPLAY_VERSION,
+    protocolVersion: PROTOCOL_VERSION,
     phase,
     activeRuns: activeRuns.size,
-    startedAt: activeRuns.size
-      ? Math.min(...Array.from(activeRuns.values(), (run) => run.startedAt))
-      : null,
+    taskTitle: focus?.taskTitle ?? null,
+    clientKind: focus?.clientKind ?? null,
+    toolSteps: focus?.toolSteps ?? 0,
+    currentTool: focus?.currentTool ?? null,
+    startedAt: focus?.startedAt ?? null,
+    roundRevision: currentRoundRevision || focus?.roundRevision || null,
     completedAt,
     error: lastError,
   };
@@ -79,49 +118,98 @@ function broadcast() {
   }
 }
 
-function removeRunsForSession(sessionId) {
+function removeRunsForSession(clientKind, sessionId) {
+  const removed = [];
   for (const [key, run] of activeRuns) {
-    if (run.sessionId === sessionId) activeRuns.delete(key);
+    if (run.clientKind === clientKind && run.sessionId === sessionId) {
+      removed.push(run);
+      activeRuns.delete(key);
+    }
   }
+  return removed;
 }
 
 function applyControl(control) {
+  if (
+    control.protocolVersion !== undefined
+    && control.protocolVersion !== null
+    && control.protocolVersion !== PROTOCOL_VERSION
+  ) {
+    throw new Error("protocol-version-mismatch");
+  }
+
   const action = normalizePart(control.action, "status");
+  const clientKind = normalizePart(control.clientKind, "generic", 32);
   const sessionId = normalizePart(control.sessionId, "manual");
   const key = runKey(control);
+  const hasRunId = typeof control.hasRunId === "boolean"
+    ? control.hasRunId
+    : typeof control.runId === "string" && control.runId.length > 0;
   const now = Date.now();
   lastActivityAt = now;
 
   if (action === "start") {
     // A user interrupt may skip the ending hook. A new turn in the same session
     // supersedes that stale lease while other sessions keep running normally.
-    removeRunsForSession(sessionId);
+    const replaced = removeRunsForSession(clientKind, sessionId);
+    const previous = newestRun(replaced);
+    nextRoundRevision += 1;
+    currentRoundRevision = nextRoundRevision;
     activeRuns.set(key, {
+      clientKind,
       sessionId,
       runId: normalizePart(control.runId, "current"),
-      startedAt: activeRuns.get(key)?.startedAt ?? now,
+      hasRunId,
+      taskTitle: normalizePart(control.taskTitle, previous?.taskTitle ?? `${clientKind} task`, 88),
+      toolSteps: 0,
+      currentTool: null,
+      startedAt: now,
       heartbeatAt: now,
+      roundRevision: nextRoundRevision,
     });
     phase = "active";
     lastError = null;
     completedAt = null;
   } else if (action === "heartbeat") {
-    const run = activeRuns.get(key);
-    if (run) run.heartbeatAt = now;
+    let run = activeRuns.get(key);
+    if (!run && !hasRunId) {
+      const candidates = [...activeRuns.values()].filter((candidate) => (
+        candidate.clientKind === clientKind && candidate.sessionId === sessionId
+      ));
+      if (candidates.length === 1) [run] = candidates;
+    }
+    if (run) {
+      run.heartbeatAt = now;
+      run.toolSteps += 1;
+      run.currentTool = normalizePart(control.toolName, run.currentTool, 48);
+      run.taskTitle = normalizePart(control.taskTitle, run.taskTitle, 88);
+    }
   } else if (action === "stop" || action === "error" || action === "cleanup") {
+    let removed = [];
     if (action === "cleanup") {
-      removeRunsForSession(sessionId);
-    } else if (!activeRuns.delete(key)) {
-      // Older clients may omit prompt_id/turn_id on the ending hook.
-      removeRunsForSession(sessionId);
+      removed = removeRunsForSession(clientKind, sessionId);
+    } else if (hasRunId) {
+      const run = activeRuns.get(key);
+      if (run) {
+        activeRuns.delete(key);
+        removed = [run];
+      }
+    } else {
+      // Compatibility path for clients whose ending event has no run ID.
+      // Claude Code does not emit Stop for a user-interrupted turn. Its next
+      // anonymous Stop therefore belongs to the currently active replacement.
+      removed = removeRunsForSession(clientKind, sessionId);
     }
 
-    if (activeRuns.size === 0) {
-      phase = action === "error" ? "error" : "complete";
-      lastError = action === "error" ? "agent-turn-failed" : null;
-      completedAt = now;
-    } else {
-      phase = "active";
+    if (removed.length > 0) {
+      lastSummary = summaryFromRun(newestRun(removed));
+      if (activeRuns.size === 0) {
+        phase = action === "error" ? "error" : "complete";
+        lastError = action === "error" ? "agent-turn-failed" : null;
+        completedAt = now;
+      } else {
+        phase = "active";
+      }
     }
   } else if (action === "reset") {
     phase = activeRuns.size ? "active" : "idle";
@@ -137,7 +225,6 @@ function applyControl(control) {
   broadcast();
   return {
     ok: true,
-    needsWindow: action === "start" && clients.size === 0,
     state: stateForClient(),
   };
 }
@@ -182,7 +269,12 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "GET" && url.pathname === "/health") {
     if (!authorized(url)) return json(response, 403, { ok: false });
-    return json(response, 200, { ok: true, pid: process.pid, version: VERSION });
+    return json(response, 200, {
+      ok: true,
+      pid: process.pid,
+      version: VERSION,
+      protocolVersion: PROTOCOL_VERSION,
+    });
   }
 
   if (request.method === "GET" && url.pathname === "/api/state") {
@@ -265,7 +357,14 @@ server.listen(0, "127.0.0.1", () => {
   const port = typeof address === "object" && address ? address.port : null;
   writeFileSync(
     STATE_FILE,
-    JSON.stringify({ pid: process.pid, port, token: TOKEN, version: VERSION, startedAt: Date.now() }),
+    JSON.stringify({
+      pid: process.pid,
+      port,
+      token: TOKEN,
+      version: VERSION,
+      protocolVersion: PROTOCOL_VERSION,
+      startedAt: Date.now(),
+    }),
     { mode: 0o600 },
   );
 });
@@ -274,10 +373,15 @@ const heartbeat = setInterval(() => {
   for (const client of clients) client.write(": keepalive\n\n");
 
   const now = Date.now();
+  const expired = [];
   for (const [key, run] of activeRuns) {
-    if (now - run.heartbeatAt > SIX_HOURS) activeRuns.delete(key);
+    if (now - run.heartbeatAt > ONE_HOUR) {
+      expired.push(run);
+      activeRuns.delete(key);
+    }
   }
   if (phase === "active" && activeRuns.size === 0) {
+    if (expired.length > 0) lastSummary = summaryFromRun(newestRun(expired));
     phase = "complete";
     completedAt = now;
     broadcast();

@@ -1,7 +1,7 @@
 {
-  "name": "needlewhile-local",
+  "name": "jieya",
   "interface": {
-    "displayName": "Needlewhile Local"
+    "displayName": "Jieya"
   },
   "plugins": [
     {

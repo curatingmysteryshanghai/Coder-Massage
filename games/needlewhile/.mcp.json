@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "needlewhile-portal": {
+      "command": "node",
+      "args": [
+        "./adapters/openai-app/server.mjs"
+      ],
+      "cwd": "."
+    }
+  }
+}
