@@ -1,7 +1,7 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.5
+- Plugin/runtime version: 0.4.6
 - Lifecycle protocol: 2
 - Build date: 2026-07-20
 - Runtime: Node.js 18+
@@ -31,7 +31,13 @@
 
 The shared runtime is validated with Codex-shaped, Claude-shaped, WorkBuddy-shaped, and Coze-shaped lifecycle fixtures. Native hook packaging is supplied for Codex and Claude Code. Other clients use the documented command adapter when their local desktop or runner exposes lifecycle hooks; cloud-only sessions cannot reach a loopback browser UI.
 
+A fresh Codex installation was exercised from a clean clone with isolated `HOME`, `CODEX_HOME`, and runtime state on macOS using Node.js 22 and Codex CLI 0.145.0-alpha.18. The plugin was copied into the Codex cache, registered as `needlewhile@jieya`, enabled, and surfaced all three Hooks as authorization-pending. The app adapter self-test proves that browser launch occurs only after the Portal click tool. Windows PowerShell paths and installer invariants are covered by static validation; native Windows execution still needs a Windows test machine.
+
+The source repository is private. Download requires explicit GitHub repository access and authentication. Run `sh ./install.sh --codex` on macOS/Linux or `.\install.ps1 -Target codex` in Windows PowerShell. Keep the clone or extracted folder at a stable path because Codex records it as the local marketplace source for diagnostics and updates.
+
 Codex Hook trust is a required user review. The installer attempts to open `codex://plugins/needlewhile@jieya`. In Codex desktop, typing `hooks` or `/hooks` in chat does not open authorization; use **Settings → Plugins → Needlewhile → Review → Trust all**. In Codex CLI, use `/hooks` with the leading slash. Hook authorization is complete only when all three Needlewhile hooks show **Trusted**. Installing or updating may change an exact command hash and require review again; trust must never be edited or bypassed. Fully quit and reopen Codex once after install/update so existing projects do not retain an older skill or MCP-process snapshot.
+
+After Hook review, run `sh ./install.sh --verify` or `.\install.ps1 -Target verify`. A ready result followed by one full Codex restart is the supported first-run boundary. A fresh top-level task then shows one inline Portal; the user clicks it to open the browser game.
 
 ## Privacy and window behavior
 

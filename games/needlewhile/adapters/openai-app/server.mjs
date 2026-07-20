@@ -13,14 +13,15 @@ const IMPORT_PLUGIN_ROOT = join(ADAPTER_DIR, "..", "..");
 const PORTAL_HTML_PATH = join(ADAPTER_DIR, "portal.html");
 const PORTAL_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.gif");
 const PORTAL_STATIC_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.png");
-const RESOURCE_URI = "ui://needlewhile/portal-v0.2.3.html";
+const RESOURCE_URI = "ui://needlewhile/portal-v0.2.4.html";
 const LEGACY_RESOURCE_URIS = new Set([
   "ui://needlewhile/portal-v0.2.1.html",
   "ui://needlewhile/portal-v0.2.2.html",
+  "ui://needlewhile/portal-v0.2.3.html",
 ]);
 const RESOURCE_MIME_TYPE = "text/html;profile=mcp-app";
 const MCP_PROTOCOL_VERSION = "2025-11-25";
-const APP_VERSION = "0.2.3";
+const APP_VERSION = "0.2.4";
 const MAX_LINE_BYTES = 1024 * 1024;
 
 const [portalHtml, portalIcon, portalStaticIcon] = await Promise.all([
@@ -296,7 +297,7 @@ function failure(id, code, message, data) {
 function resourceDescriptor() {
   return {
     uri: RESOURCE_URI,
-    name: "needlewhile_portal_v0_2_3",
+    name: "needlewhile_portal_v0_2_4",
     title: "Needlewhile",
     description: "Tiny borderless pixel-art portal for entering the local Needlewhile game.",
     mimeType: RESOURCE_MIME_TYPE,

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -84,7 +84,7 @@
         class="portal-link"
         id="portal"
         type="button"
-        aria-label="打开 Needlewhile 时空门"
+        aria-label="Open the Needlewhile time portal"
         aria-disabled="true"
         disabled
       >
@@ -215,7 +215,7 @@
         const initializeBridge = async () => {
           try {
             const initialized = await request("ui/initialize", {
-              appInfo: { name: "needlewhile-portal", version: "0.2.3" },
+              appInfo: { name: "needlewhile-portal", version: "0.2.4" },
               appCapabilities: { availableDisplayModes: ["inline"] },
               protocolVersion: APP_PROTOCOL_VERSION,
             });

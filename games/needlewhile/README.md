@@ -12,8 +12,8 @@ Lifecycle hooks quietly track a turn. After one-time trust in Codex, the top-lev
 - Left-click or right-click to place a needle during an active turn.
 - Space, arrow keys, and most ordinary keys also place needles.
 - `Escape`, `F11`, Tab, and modifier shortcuts remain browser/OS controls and never place a needle.
-- Use `换配色` to randomize a paired background and yarn palette.
-- Use `声音` to mute or unmute the local procedural audio.
+- Use `Palette` to randomize a paired background and yarn palette.
+- Use `Sound` to mute or unmute the local procedural audio.
 
 Needles sample the front center, outer face, rim, foreground, and background. Older needles progressively sink so the interaction remains readable.
 
@@ -41,11 +41,13 @@ npm run shutdown
 
 ## Installation
 
-From the repository root:
+The GitHub repository is currently private, so each installer needs explicit repository access and an authenticated clone or ZIP download first. Node.js 18+ and a `codex` command available on `PATH` are required for Codex installation; no `npm install` or build step is needed.
+
+From the repository root on macOS or Linux:
 
 ```bash
-./install.sh --codex
-./install.sh --claude
+sh ./install.sh --codex
+sh ./install.sh --claude
 ```
 
 Windows PowerShell:
@@ -57,11 +59,13 @@ Windows PowerShell:
 
 The root marketplace catalogs install this plugin as `needlewhile@jieya`.
 
+Keep the cloned or extracted repository at a stable path. Codex caches the installed plugin, while the configured local marketplace continues to use that folder for diagnostics and updates.
+
 The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in chat does not open Hook authorization. Go to **Settings → Plugins → Needlewhile → Review → Trust all**, inspect the commands, and confirm that all three Needlewhile hooks show **Trusted**.
 
 In Codex CLI, use `/hooks` with the leading slash and review the same three commands. Installing or updating can change an exact command hash, so a previously trusted Hook may require review again. Never edit or bypass Hook trust.
 
-Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`. After trusting all three Hooks, verify directly with `node scripts/codex-hook-doctor.mjs`. When it reports ready, fully quit and reopen Codex once so existing projects reload the new Hook, skill, and MCP process, then start a fresh top-level task. Do not rerun the installer after the doctor succeeds.
+Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`; the plugin files are installed and only user authorization remains. After trusting all three Hooks, verify from the repository root with `sh ./install.sh --verify` or `.\install.ps1 -Target verify`. When verification reports ready, fully quit and reopen Codex once so existing projects reload the new Hook, skill, and MCP process, then start a fresh top-level task. The inline Portal appears once; its click opens a normal browser tab, and the page Portal enters the game. Automatic browser launch is intentionally disabled.
 
 ## Lifecycle protocol
 
@@ -82,10 +86,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.5`
+- Plugin/runtime package: `0.4.6`
 - Lifecycle protocol: `2`
 
-Runtime 0.4.5 keeps the approved compact pixel-art Portal and fixes entry from Codex: the click now invokes an app-only local launch tool instead of sending the dynamic HTTP loopback URL through Codex's HTTPS-only external-link bridge. It also keeps upgrade-safe runtime snapshots and installation gated on all three trusted Hooks.
+Runtime 0.4.6 keeps the compact pixel-art Portal looping, preserves one shared task clock from prompt submission through browser entry and completion, and refines front-face needle perspective. The click invokes an app-only local launch tool instead of sending a dynamic loopback URL through Codex's external-link bridge. Runtime snapshots remain upgrade-safe, and installation remains gated on all three trusted Hooks.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 

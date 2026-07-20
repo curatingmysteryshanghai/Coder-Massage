@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -14,7 +15,7 @@ const OPENAI_ADAPTER_SERVER = join(OPENAI_ADAPTER_DIR, "server.mjs");
 const OPENAI_ADAPTER_TEST = join(OPENAI_ADAPTER_DIR, "self-test.mjs");
 const CODEX_HOOK_DOCTOR = join(ROOT, "scripts", "codex-hook-doctor.mjs");
 const CODEX_HOOK_DOCTOR_TEST = join(ROOT, "scripts", "codex-hook-doctor.test.mjs");
-const EXPECTED_RUNTIME_VERSION = "0.4.5";
+const EXPECTED_RUNTIME_VERSION = "0.4.6";
 const EXPECTED_DESIGN_VERSION = "Ver. 0.2";
 const EXPECTED_PROTOCOL_VERSION = 2;
 const STATE_DIR = mkdtempSync(join(tmpdir(), "needlewhile-validate-"));
@@ -32,6 +33,24 @@ function pass(message) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function verifySha256Manifest(baseDir, manifestPath) {
+  const normalizedBase = resolve(baseDir);
+  const lines = readFileSync(manifestPath, "utf8").trim().split(/\r?\n/);
+  assert(lines.length > 0, `${manifestPath} is empty`);
+  for (const line of lines) {
+    const match = line.match(/^([a-f0-9]{64}) {2}(.+)$/);
+    assert(match, `${manifestPath} contains an invalid entry: ${line}`);
+    const absolute = resolve(normalizedBase, match[2]);
+    assert(
+      absolute.startsWith(`${normalizedBase}${sep}`),
+      `${manifestPath} points outside its package: ${match[2]}`,
+    );
+    const actual = createHash("sha256").update(readFileSync(absolute)).digest("hex");
+    assert(actual === match[1], `SHA-256 mismatch for ${match[2]}`);
+  }
+  return lines.length;
 }
 
 function read(relativePath) {
@@ -85,6 +104,9 @@ function hookDefinition(hooks, event) {
 }
 
 try {
+  const integrityCount = verifySha256Manifest(ROOT, join(ROOT, "MANIFEST.sha256"));
+  pass(`SHA-256 manifest verifies ${integrityCount} packaged files`);
+
   const packageManifest = json("package.json");
   const releaseManifest = json("release-manifest.json");
   const codexManifest = json(".codex-plugin/plugin.json");
@@ -105,6 +127,12 @@ try {
   assert(releaseManifest.version === EXPECTED_RUNTIME_VERSION, "release runtime version mismatch");
   assert(releaseManifest.designVersion === EXPECTED_DESIGN_VERSION, "release design version mismatch");
   assert(releaseManifest.protocolVersion === EXPECTED_PROTOCOL_VERSION, "release protocol version mismatch");
+  assert(releaseManifest.installation?.shell === "sh ./install.sh --codex", "release shell install command mismatch");
+  assert(releaseManifest.installation?.powershell === ".\\install.ps1 -Target codex", "release PowerShell install command mismatch");
+  assert(releaseManifest.installation?.verifyShell === "sh ./install.sh --verify", "release shell verify command mismatch");
+  assert(releaseManifest.installation?.verifyPowerShell === ".\\install.ps1 -Target verify", "release PowerShell verify command mismatch");
+  assert(releaseManifest.installation?.codexPluginId === "needlewhile@jieya", "release Codex plugin ID mismatch");
+  assert(releaseManifest.installation?.manualRequirements?.length === 2, "release install boundary must list Hook trust and restart");
   assert(codexManifest.hooks === "./hooks.json", "Codex hook path mismatch");
   assert(codexManifest.mcpServers === "./.mcp.json", "Codex MCP App config path mismatch");
   assert(
@@ -115,7 +143,7 @@ try {
   assert(codexMarketplace.name === "jieya", "standalone Codex marketplace name mismatch");
   assert(codexMarketplace.plugins?.[0]?.name === "needlewhile", "standalone Codex plugin name mismatch");
   assert(codexMarketplace.plugins?.[0]?.source?.path === "./", "standalone Codex marketplace path mismatch");
-  pass("runtime 0.4.5, design Ver. 0.2, and protocol 2 align across release manifests");
+  pass("runtime 0.4.6, design Ver. 0.2, and protocol 2 align across release manifests");
 
   const codexEvents = Object.keys(codexHooks.hooks);
   const supportedCodexEvents = new Set([
@@ -211,6 +239,7 @@ try {
     assert(installerSource.includes("codex-hook-doctor.mjs"), `${installerPath} does not run the Hook doctor`);
     assert(installerSource.includes("codex://plugins/needlewhile@jieya"), `${installerPath} does not open the desktop review page`);
     assert(installerSource.includes("NEEDLEWHILE_STATUS=pending"), `${installerPath} does not expose pending authorization`);
+    assert(installerSource.toLowerCase().includes("verify"), `${installerPath} does not expose post-trust verification`);
     assert(installerSource.includes("Restart Codex once"), `${installerPath} does not require a post-install/update Codex restart`);
     assert(installerSource.includes("already enabled at version"), `${installerPath} does not leave an enabled current version unchanged`);
     assert(installerSource.toLowerCase().includes("version mismatch"), `${installerPath} does not reject an outdated plugin version`);
@@ -219,9 +248,19 @@ try {
     assert(!installerSource.includes("dangerously-bypass-hook-trust"), `${installerPath} must not bypass Hook trust`);
   }
   if (process.platform !== "win32") {
-    assert((statSync(join(ROOT, "install.sh")).mode & 0o111) !== 0, "install.sh must remain executable");
+    const shellInstaller = join(ROOT, "install.sh");
+    assert((statSync(shellInstaller).mode & 0o111) !== 0, "install.sh must remain executable");
+    for (const shell of ["sh", "dash"]) {
+      const syntax = spawnSync(shell, ["-n", shellInstaller], { encoding: "utf8" });
+      if (syntax.error?.code === "ENOENT" && shell === "dash") continue;
+      assert(syntax.status === 0, `install.sh failed ${shell} syntax check: ${syntax.stderr}`);
+    }
   }
-  pass("standalone installers require explicit Hook authorization before reporting ready");
+  const readme = read("README.md").toString("utf8");
+  assert(readme.includes("currently private"), "README does not disclose private GitHub access");
+  assert(readme.includes("sh ./install.sh --codex"), "README does not document ZIP-safe shell install");
+  assert(readme.includes("sh ./install.sh --verify"), "README does not document post-trust verification");
+  pass("standalone installers expose ZIP-safe install, explicit Hook authorization, and post-trust verification");
 
   const openaiAdapterTest = spawnSync(process.execPath, [OPENAI_ADAPTER_TEST], {
     cwd: OPENAI_ADAPTER_DIR,

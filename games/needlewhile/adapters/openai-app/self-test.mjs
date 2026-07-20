@@ -2,9 +2,9 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { appendFile, chmod, cp, mkdtemp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { appendFile, cp, mkdtemp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join } from "node:path";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { runInNewContext } from "node:vm";
@@ -16,7 +16,8 @@ const SELF_PATH = join(ADAPTER_DIR, "self-test.mjs");
 const PORTAL_HTML_PATH = join(ADAPTER_DIR, "portal.html");
 const PORTAL_GIF_PATH = join(ADAPTER_DIR, "assets", "portal-icon.gif");
 const PORTAL_STATIC_PATH = join(ADAPTER_DIR, "assets", "portal-icon.png");
-const RESOURCE_URI = "ui://needlewhile/portal-v0.2.3.html";
+const GAME_APP_PATH = join(PLUGIN_ROOT, "skills", "needlewhile", "app", "public", "app.js");
+const RESOURCE_URI = "ui://needlewhile/portal-v0.2.4.html";
 const MIME_TYPE = "text/html;profile=mcp-app";
 
 async function syntaxCheck(file) {
@@ -270,9 +271,15 @@ for (let index = 0; index <= portalGif.length - 3; index += 1) {
 assert.equal(graphicsControlCount, 8, "Portal GIF must retain all eight supplied frames");
 const loopExtension = portalGif.indexOf(Buffer.from("NETSCAPE2.0", "ascii"));
 assert(loopExtension >= 0, "Portal GIF loop extension is missing");
-assert.equal(portalGif.readUInt16LE(loopExtension + 13), 5, "Portal GIF must stop after six total passes");
+assert.equal(portalGif.readUInt16LE(loopExtension + 13), 0, "Portal GIF must loop continuously");
 const portalStatic = await readFile(PORTAL_STATIC_PATH);
 assert.equal(portalStatic.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+
+const gameApp = await readFile(GAME_APP_PATH, "utf8");
+assert.match(gameApp, /const end = endedAt \|\| Date\.now\(\)/);
+assert.match(gameApp, /\(end - startedAt\) \/ 1000/);
+assert.match(gameApp, /phase === "active" \? null : currentState\.completedAt/);
+assert.match(gameApp, /formatElapsed\(currentState\.startedAt, endedAt\)/);
 
 if (process.argv.includes("--syntax-only")) {
   process.stdout.write("syntax: ok\n");
@@ -283,25 +290,22 @@ await testPortalScriptClicks();
 
 const testRoot = await mkdtemp(join(tmpdir(), "needlewhile-openai-adapter-test-"));
 const stateDir = join(testRoot, "state");
-const fakeBin = join(testRoot, "bin");
 const browserMarker = join(testRoot, "browser-launched.txt");
+const testBrowserLauncher = join(testRoot, "browser-launcher.mjs");
 const snapshotBase = join(testRoot, "runtime-snapshots");
-const stagedPluginRoot = join(testRoot, "cache", "needlewhile", "0.4.5");
-const stagedBackupRoot = join(testRoot, "cache", "plugin-backup", "needlewhile", "0.4.5");
+const stagedPluginRoot = join(testRoot, "cache", "needlewhile", "0.4.6");
+const stagedBackupRoot = join(testRoot, "cache", "plugin-backup", "needlewhile", "0.4.6");
 await mkdir(stateDir, { recursive: true });
-await mkdir(fakeBin, { recursive: true });
 await mkdir(dirname(stagedBackupRoot), { recursive: true });
 await cp(ADAPTER_DIR, join(stagedPluginRoot, "adapters", "openai-app"), { recursive: true });
 await cp(join(PLUGIN_ROOT, "skills", "needlewhile"), join(stagedPluginRoot, "skills", "needlewhile"), { recursive: true });
 const stagedLifecycle = join(stagedPluginRoot, "skills", "needlewhile", "scripts", "lifecycle.mjs");
 await appendFile(stagedLifecycle, "\n// needlewhile-self-test-staged-runtime\n");
 
-const fakeLauncher = `#!/bin/sh\nprintf '%s' launched > "${browserMarker}"\n`;
-for (const name of ["open", "xdg-open"]) {
-  const path = join(fakeBin, name);
-  await writeFile(path, fakeLauncher, { mode: 0o755 });
-  await chmod(path, 0o755);
-}
+await writeFile(
+  testBrowserLauncher,
+  `import { writeFile } from "node:fs/promises";\nawait writeFile(${JSON.stringify(browserMarker)}, process.argv[2] ?? "");\n`,
+);
 
 const child = spawn(process.execPath, [join(stagedPluginRoot, "adapters", "openai-app", "server.mjs")], {
   cwd: stagedPluginRoot,
@@ -309,7 +313,8 @@ const child = spawn(process.execPath, [join(stagedPluginRoot, "adapters", "opena
     ...process.env,
     NEEDLEWHILE_MCP_SNAPSHOT_BASE: snapshotBase,
     NEEDLEWHILE_STATE_DIR: stateDir,
-    PATH: `${fakeBin}${delimiter}${process.env.PATH ?? ""}`,
+    NEEDLEWHILE_SELF_TEST: "1",
+    NEEDLEWHILE_TEST_BROWSER_LAUNCHER: testBrowserLauncher,
   },
   stdio: ["pipe", "pipe", "pipe"],
 });
@@ -363,7 +368,7 @@ async function markerExists() {
   }
 }
 
-async function waitForMarker(timeoutMs = 2_000) {
+async function waitForMarker(timeoutMs = 5_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (await markerExists()) return true;
@@ -386,6 +391,51 @@ async function shutdownController() {
   }
 }
 
+async function runIsolatedLifecycle(lifecyclePath, hookInput) {
+  await new Promise((resolve, reject) => {
+    const hookChild = spawn(process.execPath, [lifecyclePath], {
+      cwd: dirname(lifecyclePath),
+      env: {
+        ...process.env,
+        NEEDLEWHILE_STATE_DIR: stateDir,
+        NEEDLEWHILE_NO_WINDOW: "1",
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let hookStderr = "";
+    const timer = setTimeout(() => {
+      hookChild.kill("SIGTERM");
+      reject(new Error(`Timed out running isolated lifecycle hook; stderr=${hookStderr}`));
+    }, 12_000);
+
+    hookChild.stderr.setEncoding("utf8");
+    hookChild.stderr.on("data", (chunk) => { hookStderr += chunk; });
+    hookChild.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    hookChild.once("exit", (code, signal) => {
+      clearTimeout(timer);
+      if (code === 0) resolve();
+      else reject(new Error(
+        `Isolated lifecycle hook exited with ${code ?? signal ?? "unknown"}; stderr=${hookStderr}`,
+      ));
+    });
+    hookChild.stdin.end(JSON.stringify(hookInput));
+  });
+}
+
+async function readTaskState(portalHref) {
+  const portalUrl = new URL(portalHref);
+  const token = portalUrl.hash.slice(1);
+  assert.match(token, /^[a-f0-9]{32,128}$/i, "Portal did not carry the controller token");
+  const response = await fetch(`${portalUrl.origin}/api/state?token=${token}`, {
+    signal: AbortSignal.timeout(2_000),
+  });
+  assert.equal(response.ok, true, "Portal controller state endpoint was unavailable");
+  return response.json();
+}
+
 try {
   const initialized = await request(1, "initialize", {
     protocolVersion: "2025-11-25",
@@ -394,20 +444,37 @@ try {
         "io.modelcontextprotocol/ui": { mimeTypes: [MIME_TYPE] },
       },
     },
-    clientInfo: { name: "needlewhile-self-test", version: "0.2.3" },
+    clientInfo: { name: "needlewhile-self-test", version: "0.2.4" },
   });
   assert.equal(initialized.result.protocolVersion, "2025-11-25");
   assert.equal(initialized.result.serverInfo.name, "needlewhile-openai-portal");
-  assert.equal(initialized.result.serverInfo.version, "0.2.3");
+  assert.equal(initialized.result.serverInfo.version, "0.2.4");
   assert.match(initialized.result.instructions, /trusted Needlewhile UserPromptSubmit hook/);
 
   const snapshots = await readdir(snapshotBase);
   assert.equal(snapshots.length, 1, "adapter did not create one hermetic runtime snapshot");
-  const snapshotLifecycle = await readFile(
-    join(snapshotBase, snapshots[0], "skills", "needlewhile", "scripts", "lifecycle.mjs"),
-    "utf8",
+  const snapshotLifecyclePath = join(
+    snapshotBase,
+    snapshots[0],
+    "skills",
+    "needlewhile",
+    "scripts",
+    "lifecycle.mjs",
   );
+  const snapshotLifecycle = await readFile(snapshotLifecyclePath, "utf8");
   assert.match(snapshotLifecycle, /needlewhile-self-test-staged-runtime/);
+
+  const timingRun = {
+    client_kind: "codex",
+    session_id: "adapter-timing-session",
+    turn_id: "adapter-timing-run",
+    task_title: "Needlewhile shared timing self-test",
+  };
+  const startRequestedAt = Date.now();
+  await runIsolatedLifecycle(snapshotLifecyclePath, {
+    ...timingRun,
+    hook_event_name: "UserPromptSubmit",
+  });
 
   child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`);
 
@@ -447,7 +514,7 @@ try {
 
   const listedResources = await request(4, "resources/list");
   assert.equal(listedResources.result.resources[0].uri, RESOURCE_URI);
-  assert.equal(listedResources.result.resources[0].name, "needlewhile_portal_v0_2_3");
+  assert.equal(listedResources.result.resources[0].name, "needlewhile_portal_v0_2_4");
   assert.equal(listedResources.result.resources[0].title, "Needlewhile");
   assert.equal(listedResources.result.resources[0].mimeType, MIME_TYPE);
 
@@ -473,6 +540,8 @@ try {
   assert.match(content.text, /toolResponseMetadata\?\.mcp_tool_result\?\._meta\?\.portalHref/);
   assert.match(content.text, /<button[\s\S]+id="portal"/);
   assert.match(content.text, /type="button"/);
+  assert.match(content.text, /aria-label="Open the Needlewhile time portal"/);
+  assert.doesNotMatch(content.text, /[\u3400-\u9fff]/, "Portal widget must keep visible and accessible copy in English");
   assert.match(content.text, /<img[\s\S]+class="portal-icon"/);
   assert.match(content.text, /alt=""/);
   assert.match(content.text, /width:\s*44px/);
@@ -492,12 +561,11 @@ try {
   for (const legacyUri of [
     "ui://needlewhile/portal-v0.2.1.html",
     "ui://needlewhile/portal-v0.2.2.html",
+    "ui://needlewhile/portal-v0.2.3.html",
   ]) {
-    const legacyResource = await request(
-      legacyUri.endsWith("0.2.1.html") ? 51 : 52,
-      "resources/read",
-      { uri: legacyUri },
-    );
+    const legacyResource = await request(51 + Number(legacyUri.match(/0\.2\.(\d+)/)?.[1] ?? 1) - 1, "resources/read", {
+      uri: legacyUri,
+    });
     assert.equal(legacyResource.result.contents[0].uri, legacyUri);
     assert.match(legacyResource.result.contents[0].text, /open_needlewhile_game/);
   }
@@ -519,12 +587,33 @@ try {
   assert.equal(called.result._meta.launchMode, "user-click");
   assert.equal(await markerExists(), false, "the adapter launched a real browser command");
 
+  const controllerFile = JSON.parse(await readFile(join(stateDir, "server.json"), "utf8"));
+  const portalUrl = new URL(called.result._meta.portalHref);
+  assert.equal(portalUrl.origin, called.result._meta.loopbackOrigin);
+  assert.equal(portalUrl.port, String(controllerFile.port));
+  assert.equal(portalUrl.hash.slice(1), controllerFile.token);
+
+  const entryState = await readTaskState(called.result._meta.portalHref);
+  assert.equal(entryState.phase, "active");
+  assert.equal(entryState.activeRuns, 1);
+  assert.equal(entryState.clientKind, "codex");
+  assert.equal(entryState.taskTitle, timingRun.task_title);
+  assert.equal(entryState.toolSteps, 0);
+  assert(Number.isInteger(entryState.startedAt));
+  assert(entryState.startedAt >= startRequestedAt);
+  assert(Number.isInteger(entryState.roundRevision));
+
   const secondCall = await request(7, "tools/call", {
     name: "show_needlewhile_portal",
     arguments: {},
   });
   assert.equal(secondCall.result._meta.portalHref, called.result._meta.portalHref);
   assert.equal(await markerExists(), false, "an idempotent repeat launched a browser command");
+
+  // The task starts at UserPromptSubmit, before the user enters the game. Give
+  // that shared run more than one second to advance before the click tool opens
+  // the browser, then prove the browser sees the exact same startedAt/revision.
+  await new Promise((resolve) => setTimeout(resolve, 1_100));
 
   const opened = await request(8, "tools/call", {
     name: "open_needlewhile_game",
@@ -535,13 +624,48 @@ try {
   assert.equal(opened.result._meta.launched, true);
   assert.equal(opened.result._meta.launchMode, "system-default-browser");
   assert.equal(await waitForMarker(), true, "the explicit Portal click tool did not launch the browser");
+  const launchedHref = (await readFile(browserMarker, "utf8")).trim();
+  assert.equal(launchedHref, called.result._meta.portalHref, "the click tool launched a different controller URL");
+
+  const gameState = await readTaskState(launchedHref);
+  assert.equal(gameState.phase, "active");
+  assert.equal(gameState.startedAt, entryState.startedAt, "game entry reset the task timer");
+  assert.equal(gameState.roundRevision, entryState.roundRevision, "game entry switched task runs");
+  assert.equal(gameState.taskTitle, entryState.taskTitle);
+  assert.equal(gameState.clientKind, entryState.clientKind);
+  const elapsedAtGameOpen = Math.floor((Date.now() - gameState.startedAt) / 1_000);
+  assert(elapsedAtGameOpen >= 1, "game elapsed time did not include work before the Portal click");
+
+  await runIsolatedLifecycle(snapshotLifecyclePath, {
+    ...timingRun,
+    hook_event_name: "PostToolUse",
+    tool_name: "exec_command",
+  });
+  const heartbeatState = await readTaskState(called.result._meta.portalHref);
+  assert.equal(heartbeatState.startedAt, entryState.startedAt);
+  assert.equal(heartbeatState.roundRevision, entryState.roundRevision);
+  assert.equal(heartbeatState.toolSteps, 1, "heartbeat did not target the active timing run");
+
+  await runIsolatedLifecycle(snapshotLifecyclePath, {
+    ...timingRun,
+    hook_event_name: "Stop",
+  });
+  const completedState = await readTaskState(called.result._meta.portalHref);
+  assert.equal(completedState.phase, "complete");
+  assert.equal(completedState.activeRuns, 0);
+  assert.equal(completedState.startedAt, entryState.startedAt);
+  assert.equal(completedState.roundRevision, entryState.roundRevision);
+  assert(Number.isInteger(completedState.completedAt));
+  assert(completedState.completedAt >= completedState.startedAt);
 
   process.stdout.write("syntax: ok\n");
+  process.stdout.write("portal GIF: eight frames, infinite loop\n");
   process.stdout.write("portal inline-script click bridge: ok\n");
   process.stdout.write("mcp jsonl initialize/ping/tools/resources: ok\n");
   process.stdout.write("cache relocation: ok\n");
   process.stdout.write(`portal: ${called.result._meta.portalHref.replace(/#.+$/, "#<redacted>")}\n`);
   process.stdout.write("browser launch: observed only after click tool\n");
+  process.stdout.write(`shared task timer: ${elapsedAtGameOpen}s elapsed before game entry; startedAt preserved through completion\n`);
 } finally {
   child.stdin.end();
   await shutdownController();

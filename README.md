@@ -61,30 +61,55 @@ npm run validate
 
 ## Install in Codex
 
+This repository is currently private. A new user must first be granted GitHub access. Use an authenticated GitHub CLI session (`gh auth login`) for cloning, or a signed-in browser for ZIP download. Anonymous clone and ZIP download will fail until the repository is made public or a release package is shared separately.
+
+Check that `node --version` is 18 or newer and `codex --version` works in the same terminal, then clone and run one installer command:
+
 ```bash
+gh auth status
 gh repo clone magicfanshanghai-sys/jieya
 cd jieya
-./install.sh --codex
+sh ./install.sh --codex
 ```
 
-On Windows PowerShell:
+On macOS/Linux, a GitHub ZIP works too: unzip it, enter the extracted `jieya` folder, and run the same `sh ./install.sh --codex` command. No `npm install` or build step is needed. Keep the extracted or cloned folder at a stable path: Codex caches the installed plugin, while the configured local marketplace still points to this folder for diagnostics and updates.
+
+On Windows PowerShell, after cloning or extracting the ZIP:
 
 ```powershell
 .\install.ps1 -Target codex
+```
+
+If Windows blocks a downloaded script, use a process-scoped fallback:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Target codex
 ```
 
 The installer attempts to open `codex://plugins/needlewhile@jieya` for review. In Codex desktop, typing `hooks` or `/hooks` in the chat box does not open Hook authorization. Use **Settings → Plugins → Needlewhile → Review → Trust all**, after inspecting the commands. Hook authorization is complete only when all three Needlewhile hooks show **Trusted**.
 
 In Codex CLI, use `/hooks` with the leading slash, inspect the same three commands, and trust them there. Installing or updating may change an exact command hash, which intentionally requires another review. Never edit or bypass Hook trust. The hooks update local state; they do not open a window. Ask Codex to “打开 Needlewhile 时空门” when you want to play.
 
-Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`. After trusting all three Hooks, verify directly with `node games/needlewhile/scripts/codex-hook-doctor.mjs`. When it reports ready, fully quit and reopen Codex once so existing projects discard old skill and MCP-process snapshots, then start a fresh top-level task. Do not rerun the installer after the doctor succeeds.
+Until review is complete, the installer prints `NEEDLEWHILE_STATUS=pending` and exits with code `2`; this means the files are installed and only user authorization remains. After trusting all three Hooks, verify with:
+
+```bash
+sh ./install.sh --verify
+```
+
+Windows PowerShell:
+
+```powershell
+.\install.ps1 -Target verify
+```
+
+When verification reports ready, fully quit and reopen Codex once so existing projects discard old Hook, skill, and MCP-process snapshots. Start a fresh top-level task after the restart. The small inline time Portal should appear once for that task; clicking it opens a normal browser tab, and clicking the page Portal enters the game. Automatic browser launch is intentionally disabled.
 
 ## Install in Claude Code
 
 ```bash
 gh repo clone magicfanshanghai-sys/jieya
 cd jieya
-./install.sh --claude
+sh ./install.sh --claude
 ```
 
 On Windows PowerShell:
@@ -133,7 +158,7 @@ Replace `workbuddy` with `coze` or another stable client name. Native packaging 
 ## Versions
 
 - Jieya/design release: **0.2.0 / Ver.0.2**
-- Needlewhile plugin/runtime: **0.4.5** (verified three-Hook trust handoff, app-only click launcher, and the saturated borderless pixel-art Portal)
+- Needlewhile plugin/runtime: **0.4.6** (infinite-loop inline Portal, shared task clock, refined needle perspective, and verified three-Hook install handoff)
 - Lifecycle protocol: **2**
 
 ## Repository layout

@@ -1,7 +1,7 @@
 {
   "name": "needlewhile",
   "displayName": "Needlewhile / 扎会儿",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "designVersion": "Ver. 0.2",
   "protocolVersion": 2,
   "buildDate": "2026-07-20",
@@ -10,15 +10,29 @@
     "browserLaunch": "explicit opt-in only",
     "browserPreference": ["system default"]
   },
+  "installation": {
+    "repositoryAccess": "private GitHub repository access required",
+    "shell": "sh ./install.sh --codex",
+    "powershell": ".\\install.ps1 -Target codex",
+    "verifyShell": "sh ./install.sh --verify",
+    "verifyPowerShell": ".\\install.ps1 -Target verify",
+    "codexPluginId": "needlewhile@jieya",
+    "manualRequirements": [
+      "review and trust all three Needlewhile Hooks",
+      "fully quit and reopen Codex once"
+    ],
+    "keepMarketplaceSource": true
+  },
   "targets": [
     "Codex plugin with an opt-in MCP App Portal",
     "Claude Code plugin",
     "Generic local lifecycle adapter for WorkBuddy and Coze-compatible runners"
   ],
   "testedAndRecommended": {
-    "codex": "tested on 0.145.0-alpha.18",
+    "codex": "fresh install tested on 0.145.0-alpha.18 with isolated HOME and CODEX_HOME; expected pre-trust result is installed, enabled, and authorization pending",
     "claudeCode": "2.1.196 or newer recommended; schema validated, CLI not present on build machine",
-    "genericAdapter": "protocol fixtures validated locally; host-specific hook registration remains client-managed"
+    "genericAdapter": "protocol fixtures validated locally; host-specific hook registration remains client-managed",
+    "windowsPowerShell": "installer contract and paths validated statically; Windows runtime execution remains to be tested on Windows"
   },
   "entrypoints": {
     "skill": "skills/needlewhile/SKILL.md",

@@ -59,16 +59,16 @@ function clientLabel(clientKind) {
     codex: "Codex",
     "claude-code": "Claude Code",
     workbuddy: "WorkBuddy",
-    coze: "扣子",
-    generic: "智能体",
-  }[clientKind] ?? clientKind ?? "智能体";
+    coze: "Coze",
+    generic: "Agent",
+  }[clientKind] ?? clientKind ?? "Agent";
 }
 
 function phaseCopy(nextPhase, runs, clientKind) {
-  if (nextPhase === "active") return runs > 1 ? `${runs} 个智能体处理中` : `${clientLabel(clientKind)} 处理中`;
-  if (nextPhase === "complete") return `${clientLabel(clientKind)} 已完成`;
-  if (nextPhase === "error") return `${clientLabel(clientKind)} 已停止`;
-  return "等待任务";
+  if (nextPhase === "active") return runs > 1 ? `${runs} agents working` : `${clientLabel(clientKind)} is working`;
+  if (nextPhase === "complete") return `${clientLabel(clientKind)} finished`;
+  if (nextPhase === "error") return `${clientLabel(clientKind)} stopped`;
+  return "Waiting for task";
 }
 
 function countLabel(value, width = 3) {
@@ -77,7 +77,7 @@ function countLabel(value, width = 3) {
 
 function updateCount() {
   pinCountText.textContent = countLabel(pinCount);
-  liveCount.textContent = `已经扎下 ${pinCount} 根针`;
+  liveCount.textContent = `${pinCount} pins placed`;
 }
 
 function clearPins() {
@@ -105,25 +105,25 @@ function updateElapsed() {
 
 function setPortalCopy() {
   if (phase === "active") {
-    portalTitle.textContent = "打开时空门";
-    portalSubtitle.textContent = "任务处理中，点一下进入扎会儿";
+    portalTitle.textContent = "Open time portal";
+    portalSubtitle.textContent = "Task in progress · click to place a few pins";
     portalButton.disabled = false;
     return;
   }
   if (phase === "complete") {
-    portalTitle.textContent = "这一轮完成了";
-    portalSubtitle.textContent = "打开看看留下的针迹";
+    portalTitle.textContent = "This round is complete";
+    portalSubtitle.textContent = "Open to see the pin trail";
     portalButton.disabled = false;
     return;
   }
   if (phase === "error") {
-    portalTitle.textContent = "任务停下来了";
-    portalSubtitle.textContent = "打开看看这一轮的针迹";
+    portalTitle.textContent = "The task stopped";
+    portalSubtitle.textContent = "Open to see this round's pin trail";
     portalButton.disabled = false;
     return;
   }
-  portalTitle.textContent = "等待时空门亮起";
-  portalSubtitle.textContent = "提交一个任务后再来扎会儿";
+  portalTitle.textContent = "Waiting for the portal";
+  portalSubtitle.textContent = "Submit a task to light it up";
   portalButton.disabled = true;
 }
 
@@ -142,8 +142,8 @@ function requestClose() {
   globalThis.setTimeout(() => {
     if (!window.closed) {
       body.dataset.closeFailed = "true";
-      completionCopy.textContent = "浏览器保留了这个页面，你可以直接关闭当前标签页。";
-      inputHint.textContent = "任务完成 · 可以关闭当前标签页";
+      completionCopy.textContent = "Your browser kept this page open. You can close this tab.";
+      inputHint.textContent = "Task complete · you can close this tab";
     }
   }, 450);
 }
@@ -154,8 +154,8 @@ function startCloseSequence() {
   body.dataset.ending = "true";
   body.dataset.closeFailed = "false";
   completionCopy.textContent = phase === "error"
-    ? "任务停下来了，先把这一轮轻轻收好。"
-    : "让毛线和思绪一起停一下。";
+    ? "The task stopped. Put this round away gently."
+    : "Let the yarn and your thoughts rest for a moment.";
   closeDeadline = Date.now() + 8_000;
 
   const tick = () => {
@@ -178,10 +178,10 @@ function applyState(state) {
   body.dataset.phase = phase;
   audio.setActive(phase === "active" && entered);
 
-  taskTitle.textContent = state.taskTitle || (phase === "active" ? "当前智能体任务" : "等待智能体任务");
+  taskTitle.textContent = state.taskTitle || (phase === "active" ? "Current agent task" : "Waiting for an agent task");
   phaseLabel.textContent = phaseCopy(phase, activeRuns, state.clientKind);
   toolLabel.textContent = countLabel(state.toolSteps ?? 0, 2);
-  toolLabel.title = state.currentTool ? `最近步骤：${state.currentTool}` : "尚无工具步骤";
+  toolLabel.title = state.currentTool ? `Latest step: ${state.currentTool}` : "No tool steps yet";
   updateElapsed();
   setPortalCopy();
 
@@ -189,14 +189,44 @@ function applyState(state) {
     stopCloseSequence();
     if (previous !== "active" || roundChanged) clearPins();
     inputHint.textContent = entered
-      ? "任意点击或普通按键扎针 · ESC 保留给浏览器"
-      : "点击时空门进入 · ESC 保留给浏览器";
+      ? "Click or press an ordinary key to place a pin · ESC stays with the browser"
+      : "Open the time portal to enter · ESC stays with the browser";
   } else if (phase === "complete" || phase === "error") {
-    inputHint.textContent = entered ? "本轮结束 · 正在收束时空门" : "任务已结束 · 可以打开查看针迹";
+    inputHint.textContent = entered ? "Round ended · closing the time portal" : "Task ended · open to see the pin trail";
     if (entered) startCloseSequence();
   } else {
-    inputHint.textContent = "等待任务 · ESC 保留给浏览器";
+    inputHint.textContent = "Waiting for a task · ESC stays with the browser";
   }
+}
+
+export function projectPinPerspective({
+  frontFace,
+  radial,
+  outward,
+  ballWidth,
+  approachSeed,
+  lengthSeed,
+}) {
+  const projection = Math.max(0, Math.min(1, radial / 0.5));
+  const angleRange = frontFace ? 10 + projection * 18 : 36;
+  const angle = outward + (approachSeed - 0.5) * angleRange;
+  const lengthRatio = frontFace
+    ? 0.052 + projection * 0.21 + lengthSeed * 0.035
+    : 0.18 + projection * 0.22 + lengthSeed * 0.08;
+  const width = frontFace
+    ? Math.max(12, Math.min(16, ballWidth * (0.022 - projection * 0.005)))
+    : Math.max(10, Math.min(15, ballWidth * 0.019));
+
+  return {
+    angle,
+    desiredLength: ballWidth * lengthRatio,
+    width,
+    projection,
+    entryOcclusion: frontFace ? 12 + (1 - projection) * 10 : 5,
+    contactSquash: Math.max(0.38, 0.9 - projection * 0.52),
+    contactOpacity: 0.52 + (1 - projection) * 0.2,
+    headOn: frontFace && projection < 0.22,
+  };
 }
 
 function pinCoordinates() {
@@ -212,9 +242,15 @@ function pinCoordinates() {
   const targetX = centerX + Math.cos(theta) * ballRect.width * radial;
   const targetY = centerY + Math.sin(theta) * ballRect.height * radial * 0.9;
   const outward = Math.atan2(targetY - centerY, targetX - centerX) * (180 / Math.PI) + 90;
-  const angle = frontFace && Math.random() < 0.7
-    ? Math.random() * 360
-    : outward + (Math.random() - 0.5) * 44;
+  const perspective = projectPinPerspective({
+    frontFace,
+    radial,
+    outward,
+    ballWidth: ballRect.width,
+    approachSeed: Math.random(),
+    lengthSeed: Math.random(),
+  });
+  const angle = perspective.angle;
   const angleRadians = angle * (Math.PI / 180);
   const headX = Math.sin(angleRadians);
   const headY = -Math.cos(angleRadians);
@@ -228,8 +264,9 @@ function pinCoordinates() {
     : headY < -0.001
       ? (targetY - toyRect.top) / -headY
       : Number.POSITIVE_INFINITY;
-  const desiredLength = ballRect.width * (frontFace ? 0.26 + Math.random() * 0.16 : 0.34 + Math.random() * 0.18);
-  const pinLength = Math.max(50, Math.min(desiredLength, Math.min(xRoom, yRoom) - 26));
+  const minimumLength = frontFace ? Math.max(32, ballRect.width * 0.046) : Math.max(48, ballRect.width * 0.075);
+  const pinLength = Math.max(minimumLength, Math.min(perspective.desiredLength, Math.min(xRoom, yRoom) - 26));
+  const layerSeed = Math.random();
 
   return {
     x: targetX - toyRect.left,
@@ -237,7 +274,14 @@ function pinCoordinates() {
     angle,
     length: pinLength,
     zone: frontFace ? "front" : "rim",
-    layer: !frontFace && Math.random() < 0.34 ? "back" : "front",
+    layer: !frontFace && layerSeed < 0.34 ? "back" : "front",
+    projection: perspective.projection,
+    width: perspective.width,
+    entryOcclusion: perspective.entryOcclusion,
+    contactSquash: perspective.contactSquash,
+    contactOpacity: perspective.contactOpacity,
+    contactAngle: outward - angle,
+    headOn: perspective.headOn,
   };
 }
 
@@ -258,20 +302,49 @@ function agePins() {
   }
 }
 
-function makePin({ x, y, angle, length, zone, layer }) {
+function makePin({
+  x,
+  y,
+  angle,
+  length,
+  zone,
+  layer,
+  projection,
+  width,
+  entryOcclusion,
+  contactSquash,
+  contactOpacity,
+  contactAngle,
+  headOn,
+}) {
   const pin = document.createElement("span");
+  const sleeve = document.createElement("span");
   const sprite = document.createElement("img");
+  const contact = document.createElement("span");
   pin.className = `pin pin--${zone}`;
+  if (headOn) pin.classList.add("pin--head-on");
   pin.dataset.born = String(pinCount);
+  pin.dataset.projection = projection.toFixed(3);
+  pin.dataset.entryOcclusion = entryOcclusion.toFixed(1);
+  pin.dataset.layer = layer;
   pin.style.left = `${(x / toy.clientWidth) * 100}%`;
   pin.style.top = `${(y / toy.clientHeight) * 100}%`;
   pin.style.setProperty("--angle", `${angle}deg`);
   pin.style.setProperty("--pin-length", `${length}px`);
+  pin.style.setProperty("--pin-width", `${width}px`);
+  pin.style.setProperty("--entry-occlusion", `${entryOcclusion}%`);
+  pin.style.setProperty("--contact-squash", String(contactSquash));
+  pin.style.setProperty("--contact-opacity", String(contactOpacity));
+  pin.style.setProperty("--contact-angle", `${contactAngle}deg`);
+  sleeve.className = "pin-occlusion";
   sprite.className = "pin-sprite";
   sprite.src = pinSprites[Math.floor(Math.random() * pinSprites.length)];
   sprite.alt = "";
   sprite.draggable = false;
-  pin.append(sprite);
+  contact.className = "pin-contact";
+  contact.setAttribute("aria-hidden", "true");
+  sleeve.append(sprite);
+  pin.append(contact, sleeve);
   (layer === "back" ? pinBackLayer : pinLayer).append(pin);
 }
 
@@ -301,6 +374,15 @@ function addPin() {
   updateCount();
 }
 
+function focusToy() {
+  if (!entered) return;
+  requestAnimationFrame(() => toy.focus({ preventScroll: true }));
+}
+
+function restoreToyFocusAfterPointer(event) {
+  if (event.detail > 0) focusToy();
+}
+
 function enterGame() {
   if (portalButton.disabled) return;
   entered = true;
@@ -309,10 +391,10 @@ function enterGame() {
   audio.setActive(phase === "active");
   if (!audio.muted) audio.prime();
   toy.setAttribute("tabindex", "0");
-  requestAnimationFrame(() => toy.focus({ preventScroll: true }));
+  focusToy();
   inputHint.textContent = phase === "active"
-    ? "任意点击或普通按键扎针 · ESC 保留给浏览器"
-    : "本轮已结束 · 正在收束时空门";
+    ? "Click or press an ordinary key to place a pin · ESC stays with the browser"
+    : "This round has ended · closing the time portal";
   if (phase === "complete" || phase === "error") startCloseSequence();
 }
 
@@ -327,7 +409,7 @@ function shufflePalette() {
   document.documentElement.style.setProperty("--cream", palette.cream);
   document.documentElement.style.setProperty("--ball-filter", palette.filter);
   body.dataset.palette = palette.name;
-  liveCount.textContent = `已切换为 ${palette.name} 配色`;
+  liveCount.textContent = `Palette changed to ${palette.name}`;
 }
 
 portalButton.addEventListener("click", enterGame);
@@ -361,23 +443,25 @@ soundToggle.addEventListener("click", (event) => {
   event.stopPropagation();
   const muted = audio.setMuted(!audio.muted);
   soundToggle.setAttribute("aria-pressed", String(muted));
-  soundToggle.setAttribute("aria-label", muted ? "打开声音" : "关闭声音");
-  soundLabel.textContent = muted ? "静音" : "声音";
+  soundToggle.setAttribute("aria-label", muted ? "Turn sound on" : "Turn sound off");
+  soundLabel.textContent = muted ? "Muted" : "Sound";
   if (!muted) audio.prime();
+  restoreToyFocusAfterPointer(event);
 });
 
 paletteToggle.addEventListener("click", (event) => {
   event.stopPropagation();
   shufflePalette();
+  restoreToyFocusAfterPointer(event);
 });
 
 closeNow.addEventListener("click", requestClose);
 
 async function connect() {
   if (!token) {
-    applyState({ phase: "error", activeRuns: 0, taskTitle: "缺少启动信号" });
-    portalTitle.textContent = "没有连接到任务";
-    portalSubtitle.textContent = "请从 Needlewhile Skill 重新打开";
+    applyState({ phase: "error", activeRuns: 0, taskTitle: "Missing launch signal" });
+    portalTitle.textContent = "No task connection";
+    portalSubtitle.textContent = "Open the game again from the Needlewhile skill";
     portalButton.disabled = true;
     return;
   }
@@ -387,9 +471,9 @@ async function connect() {
     if (!response.ok) throw new Error("unauthorized");
     applyState(await response.json());
   } catch {
-    applyState({ phase: "error", activeRuns: 0, taskTitle: "连接已断开" });
-    portalTitle.textContent = "时空门失去连接";
-    portalSubtitle.textContent = "请从 Needlewhile Skill 重新打开";
+    applyState({ phase: "error", activeRuns: 0, taskTitle: "Connection lost" });
+    portalTitle.textContent = "The time portal lost its connection";
+    portalSubtitle.textContent = "Open the game again from the Needlewhile skill";
     portalButton.disabled = true;
     return;
   }

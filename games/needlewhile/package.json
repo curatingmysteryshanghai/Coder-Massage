@@ -1,6 +1,6 @@
 {
   "name": "needlewhile",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "private": true,
   "type": "module",
   "description": "An opt-in tactile yarn-ball waiting toy for local AI agent clients.",
