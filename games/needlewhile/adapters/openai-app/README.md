@@ -4,7 +4,7 @@ This directory provides a zero-dependency, JSONL-over-stdio MCP server for hosts
 
 - `show_needlewhile_portal`: use after an explicit user request, or exactly once when Needlewhile's trusted top-level `UserPromptSubmit` hook asks Codex to mount the inline Portal.
 
-The tool starts or reuses Needlewhile's loopback controller by executing the shared lifecycle command with both `open --no-window` and `NEEDLEWHILE_NO_WINDOW=1`. It then renders a small pixel-art time portal inside the conversation. The browser opens only after the user clicks that portal.
+The tool starts or reuses Needlewhile's loopback controller by executing the shared lifecycle command with both `open --no-window` and `NEEDLEWHILE_NO_WINDOW=1`. It then renders one generated transparent pixel-art Portal icon inside a 44×44 borderless conversation surface. The browser opens only after the user clicks that icon.
 
 ## Architecture
 
@@ -12,7 +12,7 @@ Primary archetype: **interactive-decoupled**, implemented as a lightweight rende
 
 - The inline resource is a small launcher, not an iframe of the full game.
 - The existing local controller still owns the game and task state.
-- The tool result keeps the token-bearing loopback URL in widget-only `_meta`; the model-facing payload receives only the loopback origin and readiness state.
+- The successful tool result has no visible text payload. The token-bearing loopback URL and launch metadata stay in widget-only `_meta`.
 - Standard MCP Apps `ui/open-link` is attempted first. ChatGPT's allowlisted `window.openai.openExternal({ href, redirectUrl: false })` bridge and an ordinary user-clicked `<a target="_blank">` remain fallbacks.
 - The resource requests no external CSP domains and no iframe permissions.
 
@@ -36,7 +36,7 @@ Implemented JSON-RPC methods:
 The registered UI resource is versioned as:
 
 ```text
-ui://needlewhile/portal-v0.2.html
+ui://needlewhile/portal-v0.2.1.html
 text/html;profile=mcp-app
 ```
 
@@ -71,7 +71,8 @@ The self-test:
 4. replaces OS browser launchers with marker scripts and confirms none are executed;
 5. repeats the tool call to verify idempotent controller reuse;
 6. checks the Codex-host result metadata paths used to recover the click URL;
-7. shuts down the temporary controller.
+7. checks the injected PNG, zero-copy borderless surface, and intrinsic-size notification;
+8. shuts down the temporary controller.
 
 ## Specification sources
 

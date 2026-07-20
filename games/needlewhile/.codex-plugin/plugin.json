@@ -1,6 +1,6 @@
 {
   "name": "needlewhile",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "An opt-in warm yarn-ball Portal for the time while Codex works.",
   "author": {
     "name": "Magic Fan"
@@ -19,7 +19,7 @@
   "interface": {
     "displayName": "Needlewhile / 扎会儿",
     "shortDescription": "A tactile yarn-ball toy for the time between prompt and answer.",
-    "longDescription": "Needlewhile quietly tracks a Codex turn and asks the host to render one small inline pixel Portal at task start. Click it to enter the local fine-fiber yarn toy, shuffle color palettes, watch live task state, and see a closing performance when the turn ends.",
+    "longDescription": "Needlewhile quietly tracks a Codex turn and asks the host to render one tiny borderless textile Portal icon at task start. Click it to enter the local fine-fiber yarn toy, shuffle color palettes, watch live task state, and see a closing performance when the turn ends.",
     "developerName": "Magic Fan",
     "category": "Productivity",
     "capabilities": [

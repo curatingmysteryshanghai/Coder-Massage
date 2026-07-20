@@ -129,7 +129,7 @@ Replace `workbuddy` with `coze` or another stable client name. Native packaging 
 ## Versions
 
 - Jieya/design release: **0.2.0 / Ver.0.2**
-- Needlewhile plugin/runtime: **0.4.1** (task-start inline Portal request plus Codex-host result metadata compatibility)
+- Needlewhile plugin/runtime: **0.4.2** (tiny borderless pixel-art Portal icon plus intrinsic-size reporting)
 - Lifecycle protocol: **2**
 
 ## Repository layout

@@ -12,7 +12,7 @@ const AUDIO = join(ROOT, "skills", "needlewhile", "app", "public", "needle-audio
 const OPENAI_ADAPTER_DIR = join(ROOT, "adapters", "openai-app");
 const OPENAI_ADAPTER_SERVER = join(OPENAI_ADAPTER_DIR, "server.mjs");
 const OPENAI_ADAPTER_TEST = join(OPENAI_ADAPTER_DIR, "self-test.mjs");
-const EXPECTED_RUNTIME_VERSION = "0.4.1";
+const EXPECTED_RUNTIME_VERSION = "0.4.2";
 const EXPECTED_DESIGN_VERSION = "Ver. 0.2";
 const EXPECTED_PROTOCOL_VERSION = 2;
 const STATE_DIR = mkdtempSync(join(tmpdir(), "needlewhile-validate-"));
@@ -110,7 +110,7 @@ try {
     "Needlewhile Portal MCP server entrypoint mismatch",
   );
   assert(claudeManifest.hooks === "./hooks/claude-hooks.json", "Claude hook path mismatch");
-  pass("runtime 0.4.1, design Ver. 0.2, and protocol 2 align across release manifests");
+  pass("runtime 0.4.2, design Ver. 0.2, and protocol 2 align across release manifests");
 
   const codexEvents = Object.keys(codexHooks.hooks);
   const supportedCodexEvents = new Set([

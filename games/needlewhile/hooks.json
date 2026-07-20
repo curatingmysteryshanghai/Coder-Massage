@@ -8,8 +8,7 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" start --client codex --inline-portal",
             "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" start --client codex --inline-portal",
-            "timeout": 5,
-            "statusMessage": "Preparing the Needlewhile Portal"
+            "timeout": 5
           }
         ]
       }
@@ -33,8 +32,7 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/needlewhile/scripts/lifecycle.mjs\" stop --client codex",
             "commandWindows": "node \"%CLAUDE_PLUGIN_ROOT%\\skills\\needlewhile\\scripts\\lifecycle.mjs\" stop --client codex",
-            "timeout": 5,
-            "statusMessage": "Letting the pins rest"
+            "timeout": 5
           }
         ]
       }

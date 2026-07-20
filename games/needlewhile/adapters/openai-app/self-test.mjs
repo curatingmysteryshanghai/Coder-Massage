@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const ADAPTER_DIR = dirname(fileURLToPath(import.meta.url));
 const SERVER_PATH = join(ADAPTER_DIR, "server.mjs");
 const SELF_PATH = join(ADAPTER_DIR, "self-test.mjs");
-const RESOURCE_URI = "ui://needlewhile/portal-v0.2.html";
+const RESOURCE_URI = "ui://needlewhile/portal-v0.2.1.html";
 const MIME_TYPE = "text/html;profile=mcp-app";
 
 async function syntaxCheck(file) {
@@ -127,7 +127,7 @@ try {
         "io.modelcontextprotocol/ui": { mimeTypes: [MIME_TYPE] },
       },
     },
-    clientInfo: { name: "needlewhile-self-test", version: "0.2.0" },
+    clientInfo: { name: "needlewhile-self-test", version: "0.2.1" },
   });
   assert.equal(initialized.result.protocolVersion, "2025-11-25");
   assert.equal(initialized.result.serverInfo.name, "needlewhile-openai-portal");
@@ -142,6 +142,7 @@ try {
   assert.equal(tools.result.tools.length, 1);
   const descriptor = tools.result.tools[0];
   assert.equal(descriptor.name, "show_needlewhile_portal");
+  assert.equal(descriptor.title, "Needlewhile");
   assert.match(descriptor.description, /trusted Needlewhile UserPromptSubmit hook/);
   assert.match(descriptor.description, /never opens a browser/);
   assert.equal(descriptor._meta.ui.resourceUri, RESOURCE_URI);
@@ -155,6 +156,7 @@ try {
 
   const listedResources = await request(4, "resources/list");
   assert.equal(listedResources.result.resources[0].uri, RESOURCE_URI);
+  assert.equal(listedResources.result.resources[0].title, "Needlewhile");
   assert.equal(listedResources.result.resources[0].mimeType, MIME_TYPE);
 
   const resource = await request(5, "resources/read", { uri: RESOURCE_URI });
@@ -162,12 +164,24 @@ try {
   assert.equal(content.mimeType, MIME_TYPE);
   assert.deepEqual(content._meta.ui.csp.connectDomains, []);
   assert.deepEqual(content._meta.ui.csp.resourceDomains, []);
+  assert.equal(content._meta.ui.prefersBorder, false);
+  assert.equal(content._meta["openai/widgetPrefersBorder"], false);
   assert.deepEqual(content._meta["openai/widgetCSP"].redirect_domains, ["http://127.0.0.1"]);
   assert.match(content.text, /request\("ui\/open-link", \{ url: portalHref \}/);
   assert.match(content.text, /window\.openai\.openExternal\(\{ href: portalHref, redirectUrl: false \}\)/);
+  assert.match(content.text, /ui\/notifications\/size-changed/);
+  assert.match(content.text, /notifyIntrinsicHeight/);
   assert.match(content.text, /toolResponseMetadata\?\.call_tool_result\?\._meta\?\.portalHref/);
   assert.match(content.text, /toolResponseMetadata\?\.mcp_tool_result\?\._meta\?\.portalHref/);
   assert.match(content.text, /<a[\s\S]+id="portal"/);
+  assert.match(content.text, /<img[\s\S]+class="portal-icon"/);
+  assert.match(content.text, /alt=""/);
+  assert.match(content.text, /width:\s*44px/);
+  assert.match(content.text, /height:\s*34px/);
+  assert.match(content.text, /image-rendering:\s*pixelated/);
+  assert.match(content.text, /data:image\/png;base64,/);
+  assert.doesNotMatch(content.text, /__NEEDLEWHILE_PORTAL_ICON_DATA_URI__/);
+  assert.doesNotMatch(content.text, /portal-card|<h1|class="copy"|enter-label|id="status"|class="ring|class="spark/);
   assert.doesNotMatch(content.text, /<iframe/i);
 
   const called = await request(6, "tools/call", {
@@ -175,8 +189,9 @@ try {
     arguments: {},
   });
   assert.equal(called.result.isError, undefined, called.result.content?.[0]?.text);
-  assert.equal(called.result.structuredContent.ready, true);
-  assert.match(called.result.structuredContent.loopbackOrigin, /^http:\/\/127\.0\.0\.1:\d+$/);
+  assert.deepEqual(called.result.content, []);
+  assert.equal(called.result.structuredContent, undefined);
+  assert.match(called.result._meta.loopbackOrigin, /^http:\/\/127\.0\.0\.1:\d+$/);
   assert.match(called.result._meta.portalHref, /^http:\/\/127\.0\.0\.1:\d+\/#\w+$/);
   assert.equal(called.result._meta.launchMode, "user-click");
   assert.equal(await markerExists(), false, "the adapter launched a real browser command");

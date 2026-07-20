@@ -18,32 +18,30 @@ const LIFECYCLE_PATH = join(
   "lifecycle.mjs",
 );
 const PORTAL_HTML_PATH = join(ADAPTER_DIR, "portal.html");
-const RESOURCE_URI = "ui://needlewhile/portal-v0.2.html";
+const PORTAL_ICON_PATH = join(ADAPTER_DIR, "assets", "portal-icon.png");
+const RESOURCE_URI = "ui://needlewhile/portal-v0.2.1.html";
 const RESOURCE_MIME_TYPE = "text/html;profile=mcp-app";
 const MCP_PROTOCOL_VERSION = "2025-11-25";
-const APP_VERSION = "0.2.0";
+const APP_VERSION = "0.2.1";
 const MAX_LINE_BYTES = 1024 * 1024;
 
-const widgetHtml = await readFile(PORTAL_HTML_PATH, "utf8");
+const [portalHtml, portalIcon] = await Promise.all([
+  readFile(PORTAL_HTML_PATH, "utf8"),
+  readFile(PORTAL_ICON_PATH),
+]);
+const widgetHtml = portalHtml.replace(
+  "__NEEDLEWHILE_PORTAL_ICON_DATA_URI__",
+  `data:image/png;base64,${portalIcon.toString("base64")}`,
+);
 
 const tool = {
   name: "show_needlewhile_portal",
-  title: "Show Needlewhile Portal",
+  title: "Needlewhile",
   description:
-    "Render the small Needlewhile pixel Portal when the user explicitly asks, or exactly once when the trusted Needlewhile UserPromptSubmit hook requests it for a top-level turn. This tool never opens a browser; the full game opens only after the user clicks the Portal.",
+    "Render the tiny borderless Needlewhile pixel-art Portal icon when the user explicitly asks, or exactly once when the trusted Needlewhile UserPromptSubmit hook requests it for a top-level turn. This tool never opens a browser; the full game opens only after the user clicks the Portal.",
   inputSchema: {
     type: "object",
     properties: {},
-    additionalProperties: false,
-  },
-  outputSchema: {
-    type: "object",
-    properties: {
-      ready: { type: "boolean" },
-      loopbackOrigin: { type: "string" },
-      displayVersion: { type: "string" },
-    },
-    required: ["ready", "loopbackOrigin", "displayVersion"],
     additionalProperties: false,
   },
   annotations: {
@@ -58,8 +56,6 @@ const tool = {
       visibility: ["model"],
     },
     "openai/outputTemplate": RESOURCE_URI,
-    "openai/toolInvocation/invoking": "Preparing the Needlewhile portal…",
-    "openai/toolInvocation/invoked": "Needlewhile portal ready.",
   },
 };
 
@@ -70,11 +66,11 @@ const resourceMeta = {
       resourceDomains: [],
       frameDomains: [],
     },
-    prefersBorder: true,
+    prefersBorder: false,
   },
   "openai/widgetDescription":
-    "A compact pixel-art time vortex. It opens the local Needlewhile game only after the user clicks the portal.",
-  "openai/widgetPrefersBorder": true,
+    "A tiny unlabeled borderless pixel-art time portal icon. It opens the local Needlewhile game only after the user clicks it; no accompanying narration is needed.",
+  "openai/widgetPrefersBorder": false,
   "openai/widgetCSP": {
     connect_domains: [],
     resource_domains: [],
@@ -163,9 +159,9 @@ function failure(id, code, message, data) {
 function resourceDescriptor() {
   return {
     uri: RESOURCE_URI,
-    name: "needlewhile_portal_v0_2",
-    title: "Needlewhile Portal · Ver. 0.2",
-    description: "Small opt-in pixel portal for entering the local Needlewhile game.",
+    name: "needlewhile_portal_v0_2_1",
+    title: "Needlewhile",
+    description: "Tiny borderless pixel-art portal for entering the local Needlewhile game.",
     mimeType: RESOURCE_MIME_TYPE,
     _meta: resourceMeta,
   };
@@ -175,18 +171,9 @@ async function callPortalTool() {
   try {
     const { loopbackOrigin, portalHref } = await ensureLocalController();
     return {
-      structuredContent: {
-        ready: true,
-        loopbackOrigin,
-        displayVersion: "Ver. 0.2",
-      },
-      content: [
-        {
-          type: "text",
-          text: "Needlewhile Ver. 0.2 is ready on localhost. Open it only by clicking the inline portal.",
-        },
-      ],
+      content: [],
       _meta: {
+        loopbackOrigin,
         portalHref,
         launchMode: "user-click",
       },
@@ -227,12 +214,12 @@ async function dispatch(message) {
       },
       serverInfo: {
         name: "needlewhile-openai-portal",
-        title: "Needlewhile Portal",
+        title: "Needlewhile",
         version: APP_VERSION,
-        description: "Opt-in inline portal for the local Needlewhile decompression game.",
+        description: "Tiny borderless inline portal for the local Needlewhile decompression game.",
       },
       instructions:
-        "Call show_needlewhile_portal after an explicit user request, or exactly once when the trusted Needlewhile UserPromptSubmit hook asks for the inline Portal on a top-level turn. Never repeat it during that turn. The tool never opens a browser by itself.",
+        "Call show_needlewhile_portal after an explicit user request, or exactly once when the trusted Needlewhile UserPromptSubmit hook asks for the inline Portal on a top-level turn. Never repeat or narrate it during that turn. The tool never opens a browser by itself.",
     });
   }
 

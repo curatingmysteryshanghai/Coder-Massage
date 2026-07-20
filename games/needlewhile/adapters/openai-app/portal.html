@@ -3,193 +3,96 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Needlewhile Portal · Ver. 0.2</title>
+    <title>Needlewhile</title>
     <style>
-      :root {
-        color-scheme: light dark;
-        --paper: var(--color-background-primary, #f4bd29);
-        --ink: var(--color-text-primary, #102f34);
-        --cream: #fff3cf;
-        --teal: #0a6d72;
-        --coral: #ef624b;
-        --mono: var(--font-mono, "SFMono-Regular", Consolas, monospace);
-        font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
-      }
-
       * { box-sizing: border-box; }
 
+      html,
       body {
         margin: 0;
-        padding: 10px;
-        color: var(--ink);
+        width: 44px;
+        height: 44px;
+        overflow: hidden;
         background: transparent;
       }
 
-      .portal-card {
-        position: relative;
+      body { display: inline-flex; }
+
+      .portal-shell {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 132px;
-        min-height: 176px;
-        overflow: hidden;
-        border: 2px solid var(--ink);
-        border-radius: 0;
-        background: var(--paper);
-        box-shadow: 5px 5px 0 color-mix(in srgb, var(--ink) 30%, transparent);
+        width: 44px;
+        height: 44px;
+        place-items: center;
       }
-
-      .copy {
-        display: flex;
-        min-width: 0;
-        flex-direction: column;
-        justify-content: center;
-        gap: 8px;
-        padding: 18px 8px 18px 18px;
-      }
-
-      .eyebrow,
-      .status {
-        margin: 0;
-        font-family: var(--mono);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .11em;
-        text-transform: uppercase;
-      }
-
-      h1 {
-        margin: 0;
-        max-width: 20ch;
-        font-size: clamp(20px, 5.5vw, 29px);
-        line-height: .98;
-        letter-spacing: -.045em;
-      }
-
-      .hint {
-        margin: 0;
-        max-width: 34ch;
-        font-size: 12px;
-        line-height: 1.45;
-      }
-
-      .status { color: color-mix(in srgb, var(--ink) 74%, transparent); }
 
       .portal-link {
-        position: relative;
         display: grid;
+        width: 44px;
+        height: 44px;
+        padding: 0;
         place-items: center;
-        min-width: 128px;
-        overflow: hidden;
-        border-left: 2px solid var(--ink);
-        color: inherit;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
         text-decoration: none;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .portal-link[aria-disabled="true"] {
         cursor: wait;
-        opacity: .72;
       }
 
-      .vortex {
-        position: relative;
-        width: 96px;
-        height: 96px;
-        image-rendering: pixelated;
-      }
-
-      .ring,
-      .core,
-      .spark {
-        position: absolute;
+      .portal-icon {
         display: block;
+        width: auto;
+        height: 34px;
+        transform-origin: 50% 52%;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+        animation: portal-breathe 2.4s steps(2, end) infinite;
+        transition: transform 90ms steps(1, end), filter 90ms steps(1, end), opacity 90ms linear;
       }
 
-      .ring {
-        inset: 9px;
-        border: 8px solid var(--teal);
-        border-top-color: var(--cream);
-        border-right-color: var(--coral);
-        box-shadow:
-          0 -8px 0 var(--ink),
-          8px 0 0 var(--cream),
-          0 8px 0 var(--coral),
-          -8px 0 0 var(--ink);
-        animation: spin 1.8s steps(8, end) infinite;
+      .portal-link[aria-disabled="true"] .portal-icon {
+        opacity: .46;
+        filter: grayscale(.34) saturate(.72);
+        animation: portal-wait 1.5s steps(2, end) infinite;
       }
 
-      .ring.two {
-        inset: 27px;
-        border-width: 6px;
-        animation-direction: reverse;
-        animation-duration: 1.2s;
+      .portal-link[aria-disabled="false"]:hover .portal-icon {
+        animation: none;
+        transform: translateY(-2px);
+        filter: brightness(1.12) saturate(1.06);
       }
 
-      .core {
-        inset: 41px;
-        background: var(--ink);
-        box-shadow:
-          -8px -8px 0 var(--cream),
-          8px 8px 0 var(--coral);
-        animation: blink .8s steps(2, end) infinite;
-      }
-
-      .spark {
-        width: 7px;
-        height: 7px;
-        background: var(--cream);
-        box-shadow: 0 0 0 2px var(--ink);
-        animation: blink 1s steps(2, end) infinite;
-      }
-
-      .spark.a { top: 5px; left: 7px; }
-      .spark.b { right: 7px; bottom: 8px; animation-delay: .3s; }
-      .spark.c { top: 15px; right: 3px; background: var(--coral); animation-delay: .6s; }
-
-      .enter-label {
-        position: absolute;
-        right: 7px;
-        bottom: 7px;
-        left: 7px;
-        padding: 4px 3px;
-        border: 1px solid var(--ink);
-        background: var(--cream);
-        font-family: var(--mono);
-        font-size: 9px;
-        font-weight: 800;
-        text-align: center;
-        text-transform: uppercase;
+      .portal-link[aria-disabled="false"]:active .portal-icon {
+        animation: none;
+        transform: translateY(1px);
       }
 
       .portal-link:focus-visible {
-        outline: 3px solid var(--cream);
-        outline-offset: -6px;
+        outline: 2px solid rgb(239 98 75 / .72);
+        outline-offset: -2px;
       }
 
-      @keyframes spin { to { transform: rotate(1turn); } }
-      @keyframes blink { 50% { opacity: .35; } }
+      @keyframes portal-breathe {
+        0%, 100% { transform: translateY(0); filter: brightness(1); }
+        50% { transform: translateY(-1px); filter: brightness(1.08); }
+      }
 
-      @media (max-width: 420px) {
-        .portal-card { grid-template-columns: minmax(0, 1fr) 112px; }
-        .copy { padding-left: 14px; }
-        .vortex { transform: scale(.86); }
+      @keyframes portal-wait {
+        0%, 100% { transform: translateY(0); opacity: .42; }
+        50% { transform: translateY(-1px); opacity: .58; }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .ring,
-        .core,
-        .spark { animation: none; }
+        .portal-icon { animation: none; }
       }
     </style>
   </head>
   <body>
-    <main class="portal-card" aria-labelledby="portal-title">
-      <section class="copy">
-        <p class="eyebrow">Needlewhile · Ver. 0.2</p>
-        <h1 id="portal-title">给任务开一扇小门</h1>
-        <p class="hint">点击时空门才会打开游戏。不会全屏，也不会抢占或改动你的浏览器。</p>
-        <p class="status" id="status" aria-live="polite">正在准备本地入口…</p>
-      </section>
-
+    <main class="portal-shell">
       <a
         class="portal-link"
         id="portal"
@@ -199,15 +102,14 @@
         aria-label="打开 Needlewhile 时空门"
         aria-disabled="true"
       >
-        <span class="vortex" aria-hidden="true">
-          <span class="ring one"></span>
-          <span class="ring two"></span>
-          <span class="core"></span>
-          <span class="spark a"></span>
-          <span class="spark b"></span>
-          <span class="spark c"></span>
-        </span>
-        <span class="enter-label" id="enter-label">准备中</span>
+        <img
+          class="portal-icon"
+          src="__NEEDLEWHILE_PORTAL_ICON_DATA_URI__"
+          alt=""
+          width="33"
+          height="34"
+          draggable="false"
+        />
       </a>
     </main>
 
@@ -215,10 +117,10 @@
       (() => {
         const APP_PROTOCOL_VERSION = "2026-01-26";
         const portal = document.getElementById("portal");
-        const status = document.getElementById("status");
-        const enterLabel = document.getElementById("enter-label");
+        const portalShell = document.querySelector(".portal-shell");
         const pending = new Map();
         let rpcId = 0;
+        let sizeFrame = null;
         let portalHref = null;
 
         const isLoopbackHref = (value) => {
@@ -236,8 +138,6 @@
           portalHref = value;
           portal.href = value;
           portal.setAttribute("aria-disabled", "false");
-          enterLabel.textContent = "进入时空门";
-          status.textContent = "入口已就绪 · 等你点击";
         };
 
         const applyToolResult = (result) => {
@@ -255,6 +155,22 @@
 
         const notify = (method, params) => {
           window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+        };
+
+        const reportSize = () => {
+          if (sizeFrame !== null) return;
+          sizeFrame = globalThis.requestAnimationFrame(() => {
+            sizeFrame = null;
+            const rect = portalShell.getBoundingClientRect();
+            const width = Math.ceil(rect.width);
+            const height = Math.ceil(rect.height);
+            notify("ui/notifications/size-changed", { width, height });
+            try {
+              window.openai?.notifyIntrinsicHeight?.(height);
+            } catch {
+              // The standard MCP Apps size notification remains the baseline path.
+            }
+          });
         };
 
         const request = (method, params, timeoutMs = 2_000) => new Promise((resolve, reject) => {
@@ -297,13 +213,15 @@
         const initializeBridge = async () => {
           try {
             await request("ui/initialize", {
-              appInfo: { name: "needlewhile-portal", version: "0.2.0" },
+              appInfo: { name: "needlewhile-portal", version: "0.2.1" },
               appCapabilities: { availableDisplayModes: ["inline"] },
               protocolVersion: APP_PROTOCOL_VERSION,
             });
             notify("ui/notifications/initialized", {});
           } catch {
             // ChatGPT's window.openai data path and the ordinary anchor remain available.
+          } finally {
+            reportSize();
           }
         };
 
@@ -315,7 +233,6 @@
 
           if (!portalHref) {
             event.preventDefault();
-            status.textContent = "入口还在准备，请稍候";
             return;
           }
 
@@ -352,6 +269,10 @@
           });
         }, { passive: true });
 
+        if (typeof ResizeObserver === "function") {
+          new ResizeObserver(reportSize).observe(portalShell);
+        }
+        reportSize();
         void initializeBridge();
       })();
     </script>

@@ -11,7 +11,7 @@ const defaultStateDir = join(tmpdir(), `needlewhile-${String(identity).replace(/
 const STATE_DIR = process.env.NEEDLEWHILE_STATE_DIR || defaultStateDir;
 const STATE_FILE = join(STATE_DIR, "server.json");
 const START_LOCK = join(STATE_DIR, "starting.lock");
-const VERSION = "0.4.1";
+const VERSION = "0.4.2";
 const PROTOCOL_VERSION = 2;
 const verbose = process.argv.includes("--verbose");
 const noWindow = process.argv.includes("--no-window") || process.env.NEEDLEWHILE_NO_WINDOW === "1";
@@ -20,7 +20,7 @@ const INLINE_PORTAL_CONTEXT = [
   "Needlewhile's trusted top-level task-start hook is active.",
   "Before substantive work, call `mcp__needlewhile_portal__show_needlewhile_portal` exactly once with `{}` so Codex renders the small inline time Portal.",
   "The tool prepares localhost state but does not open a browser; the full game opens only if the user clicks the Portal.",
-  "Do not call it for a subagent or repeat it during this turn. If the tool is unavailable, continue silently.",
+  "Do not call it for a subagent, repeat it during this turn, or narrate the Portal in the assistant response. If the tool is unavailable, continue silently.",
 ].join(" ");
 const INLINE_PORTAL_TOOL_NAMES = new Set([
   "show_needlewhile_portal",

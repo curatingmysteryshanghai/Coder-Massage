@@ -1,7 +1,7 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.1
+- Plugin/runtime version: 0.4.2
 - Lifecycle protocol: 2
 - Build date: 2026-07-20
 - Runtime: Node.js 18+
@@ -12,7 +12,7 @@
 
 ## What is included
 
-- Click-safe pixel time Portal; the trusted Codex task-start hook requests the inline launcher once and never launches or resizes a browser
+- Tiny borderless pixel-art Portal icon; the trusted Codex task-start hook requests it once and never launches or resizes a browser
 - Live task title, client, elapsed time, tool-step count, and pin count
 - Eight-second closing countdown and pixel ending performance
 - Random paired background/yarn palettes
@@ -22,6 +22,7 @@
 - Separate Codex and Claude Code plugin manifests and hooks
 - Generic command adapter contract for other local agent clients
 - Zero-dependency loopback game server and browser client
+- Generated transparent pixel-art Portal artwork sized for a 44px inline MCP surface
 - Layered procedural Web Audio needle tip, wool compression, and dry rustle sound
 - macOS/Linux shell installer and Windows PowerShell installer
 - Validator, design concept, browser screenshots, and SHA-256 manifests

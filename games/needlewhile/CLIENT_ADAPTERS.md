@@ -6,7 +6,7 @@ Needlewhile uses one local game/runtime and adapts the entry surface to each age
 
 | Client | Lifecycle source | Best Portal surface | Ver.0.2 status |
 | --- | --- | --- | --- |
-| Codex desktop / compatible ChatGPT host | bundled Codex hooks + local MCP App | small inline MCP Apps pixel Portal at top-level task start; click opens the normal local game URL | Packaged, adapter-tested, and requires one-time hook trust after install/update |
+| Codex desktop / compatible ChatGPT host | bundled Codex hooks + local MCP App | tiny borderless pixel-art Portal icon at top-level task start; click opens the normal local game URL | Packaged, adapter-tested, and requires one-time hook trust after install/update |
 | Codex CLI / IDE | bundled hooks where supported | explicit local URL in the system browser | Shared bridge works; no inline-widget promise |
 | Claude Code local | bundled Claude hooks | ordinary clickable `http://127.0.0.1` URL / explicit browser open | Packaged and fixture-tested; no arbitrary HTML widget surface |
 | Tencent WorkBuddy desktop | host Skill/Hook wrapper around the generic bridge | right-side built-in browser preview of the local Web app | Protocol ready; host-specific wrapper and runtime smoke test remain |
@@ -49,7 +49,7 @@ New generic adapters should always provide a stable per-turn run ID; this is wha
 The plugin keeps two surfaces separate:
 
 1. `hooks.json` updates the local lifecycle controller. On a successful, trusted, top-level Codex `UserPromptSubmit`, it returns official `hookSpecificOutput.additionalContext` asking Codex to call the Portal tool once. Other lifecycle events return `{}`. Hooks never start a browser.
-2. The local MCP Apps adapter exposes `show_needlewhile_portal`. The user may request it directly, and the trusted prompt hook may request it once at task start. Its bundled `text/html;profile=mcp-app` resource draws the small pixel vortex inline. Clicking it calls the host's vetted external-navigation API and opens the tokenized loopback game URL.
+2. The local MCP Apps adapter exposes `show_needlewhile_portal`. The user may request it directly, and the trusted prompt hook may request it once at task start. Its bundled `text/html;profile=mcp-app` resource renders one generated transparent pixel-art Portal icon in a 44×44 surface, with no visible copy or card. Clicking it calls the host's vetted external-navigation API and opens the tokenized loopback game URL.
 
 The widget directly bundles its HTML/CSS/JS resource and does not iframe a third-party page. The full game remains a normal local page because it needs sustained keyboard/pointer input, audio, and an SSE connection.
 

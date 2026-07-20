@@ -4,11 +4,11 @@ An opt-in local waiting game for AI agent sessions, and Game 01 in the private [
 
 ![Needlewhile Ver.0.2](./design/preview.png)
 
-Lifecycle hooks quietly track a turn. After one-time trust in Codex, the top-level prompt hook asks the host to mount a small inline pixel time Portal at task start. Clicking it opens the yarn-ball game in a normal default-browser tab. Hooks themselves never launch or take over a browser.
+Lifecycle hooks quietly track a turn. After one-time trust in Codex, the top-level prompt hook asks the host to mount a tiny borderless pixel-art Portal icon at task start. Clicking it opens the yarn-ball game in a normal default-browser tab. Hooks themselves never launch or take over a browser.
 
 ## Controls
 
-- Click the pixel time Portal to enter.
+- Click the tiny inline pixel-art Portal to open Needlewhile, then use the page Portal to enter the game.
 - Left-click or right-click to place a needle during an active turn.
 - Space, arrow keys, and most ordinary keys also place needles.
 - `Escape`, `F11`, Tab, and modifier shortcuts remain browser/OS controls and never place a needle.
@@ -78,10 +78,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.1`
+- Plugin/runtime package: `0.4.2`
 - Lifecycle protocol: `2`
 
-Runtime 0.4.1 adds the trusted task-start inline Portal request and Codex-host result metadata compatibility.
+Runtime 0.4.2 replaces the large narrated card with a generated pixel-art icon derived from the approved reference, removes the host border preference, and reports its compact intrinsic size.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 
