@@ -1,8 +1,9 @@
 # Needlewhile OpenAI inline Portal adapter
 
-This directory provides a zero-dependency, JSONL-over-stdio MCP server for hosts that can render MCP Apps resources. It exposes one click-safe render tool:
+This directory provides a zero-dependency, JSONL-over-stdio MCP server for hosts that can render MCP Apps resources. It exposes a render tool plus one app-only click action:
 
 - `show_needlewhile_portal`: use after an explicit user request, or exactly once when Needlewhile's trusted top-level `UserPromptSubmit` hook asks Codex to mount the inline Portal.
+- `open_needlewhile_game`: hidden from the model and called by the Portal only after a real user click; it asks the shared lifecycle runtime to open the prepared loopback game in the system default browser.
 
 The tool starts or reuses Needlewhile's loopback controller by executing the shared lifecycle command with both `open --no-window` and `NEEDLEWHILE_NO_WINDOW=1`. It then renders one saturated transparent pixel-art Portal icon inside a 44Ã—44 borderless conversation surface. The browser opens only after the user clicks that icon.
 
@@ -13,7 +14,8 @@ Primary archetype: **interactive-decoupled**, implemented as a lightweight rende
 - The inline resource is a small launcher, not an iframe of the full game.
 - The existing local controller still owns the game and task state.
 - The successful tool result has no visible text payload. The token-bearing loopback URL and launch metadata stay in widget-only `_meta`.
-- Standard MCP Apps `ui/open-link` is attempted first. ChatGPT's allowlisted `window.openai.openExternal({ href, redirectUrl: false })` bridge and an ordinary user-clicked `<a target="_blank">` remain fallbacks.
+- A click calls the app-only `open_needlewhile_game` tool through standard MCP Apps `tools/call`; `window.openai.callTool` remains the ChatGPT compatibility path.
+- The browser is launched by the trusted local lifecycle runtime, so Codex never has to approve or navigate to a dynamic plain-HTTP loopback URL.
 - The resource requests no external CSP domains and no iframe permissions.
 
 ## MCP contract
@@ -36,9 +38,11 @@ Implemented JSON-RPC methods:
 The registered UI resource is versioned as:
 
 ```text
-ui://needlewhile/portal-v0.2.2.html
+ui://needlewhile/portal-v0.2.3.html
 text/html;profile=mcp-app
 ```
+
+The adapter also serves the fixed launcher for the earlier `v0.2.1` and `v0.2.2` resource URIs, so a remounted Portal from an existing task does not fail with `Resource not found` after an upgrade.
 
 Example local stdio configuration:
 
@@ -60,7 +64,7 @@ The host should call `show_needlewhile_portal` for an explicit request such as â
 ## Validate
 
 ```bash
-npm test
+npm run test:openai-app
 ```
 
 The self-test:
@@ -68,12 +72,13 @@ The self-test:
 1. runs `node --check` on the server and test files;
 2. exercises initialize, ping, tool discovery/call, and resource discovery/read over real JSONL stdio;
 3. verifies the returned URL is loopback-only;
-4. replaces OS browser launchers with marker scripts and confirms none are executed;
+4. replaces OS browser launchers with marker scripts, confirms rendering alone executes none, then proves the app-only click tool executes exactly the explicit launch path;
 5. moves the live plugin directory aside and verifies the already-running adapter still resolves its lifecycle path;
-6. repeats the tool call to verify idempotent controller reuse;
+6. repeats the render tool call to verify idempotent controller reuse;
 7. checks the Codex-host result metadata paths used to recover the click URL;
-8. checks the injected animated GIF, saturated borderless surface, and intrinsic-size notification;
-9. shuts down the temporary controller.
+8. executes the real inline script in a minimal VM host to verify single-flight clicks, standard `tools/call`, and the `window.openai.callTool` compatibility fallback;
+9. checks the injected animated GIF, saturated borderless surface, intrinsic-size notification, and legacy resource aliases;
+10. shuts down the temporary controller.
 
 ## Specification sources
 
