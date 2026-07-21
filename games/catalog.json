@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "collection": {
+    "productName": "Coder Massage",
+    "localizedName": "coder马杀鸡",
+    "technicalId": "jieya",
+    "releaseStage": "early-access"
+  },
+  "runtime": {
+    "lifecycleOwnerGameId": "needlewhile",
+    "lifecycleOwnerPluginId": "needlewhile@jieya",
+    "lifecycleOwnerSourcePath": "./needlewhile",
+    "currentSelectionMode": "hardwired-single-game",
+    "plannedSelectionMode": "weighted-random-per-run",
+    "plannedBundledCatalogPath": "./needlewhile/collection/catalog.json"
+  },
+  "categories": [
+    {
+      "id": "tactile",
+      "name": {
+        "en": "Tactile",
+        "zh-CN": "触觉小动作"
+      }
+    },
+    {
+      "id": "ambient",
+      "name": {
+        "en": "Ambient",
+        "zh-CN": "环境观察"
+      }
+    },
+    {
+      "id": "rhythmic",
+      "name": {
+        "en": "Rhythmic",
+        "zh-CN": "节律重复"
+      }
+    },
+    {
+      "id": "spatial",
+      "name": {
+        "en": "Spatial",
+        "zh-CN": "空间漫游"
+      }
+    }
+  ],
+  "games": [
+    {
+      "id": "needlewhile",
+      "sequence": 1,
+      "name": {
+        "en": "Needlewhile",
+        "zh-CN": "扎会儿",
+        "ja": "Needlewhile / 扎会儿",
+        "ko": "Needlewhile / 扎会儿",
+        "hi": "Needlewhile / 扎会儿"
+      },
+      "path": "./needlewhile",
+      "category": "tactile",
+      "interactionTags": [
+        "mouse",
+        "keyboard",
+        "placement"
+      ],
+      "attention": "low",
+      "progression": "none",
+      "status": "available",
+      "releaseStage": "user-testing",
+      "distribution": {
+        "bundled": true,
+        "installable": true,
+        "marketplace": true,
+        "codexPluginId": "needlewhile@jieya"
+      },
+      "portal": {
+        "eligible": true,
+        "randomWeight": 1
+      }
+    }
+  ]
+}

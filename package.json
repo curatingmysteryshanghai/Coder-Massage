@@ -1,9 +1,10 @@
 {
   "name": "jieya",
-  "version": "0.2.0",
+  "displayName": "Coder Massage / coder马杀鸡",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "An early-access collection of tactile decompression minigames for AI waiting time.",
+  "description": "Opt-in, low-attention microgames for the gap time while AI agents work.",
   "scripts": {
     "demo": "npm --prefix games/needlewhile run demo",
     "stop": "npm --prefix games/needlewhile run stop",
