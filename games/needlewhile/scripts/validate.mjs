@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -35,13 +35,37 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function isPackagingIgnored(relativePath, isDirectory) {
+  const normalized = relativePath.split(sep).join("/");
+  const parts = normalized.split("/");
+  const name = parts.at(-1);
+  const ignoredFiles = new Set([
+    "design/concept-v1-realistic.png",
+    "skills/needlewhile/app/public/assets/anime-background.png",
+    "skills/needlewhile/app/public/assets/felt-background.jpg",
+    "skills/needlewhile/app/public/assets/wool-ball-anime.png",
+    "skills/needlewhile/app/public/assets/wool-ball.png",
+  ]);
+  if (parts.some((part) => [".git", "node_modules", ".media", "browser-profile"].includes(part))) return true;
+  if (normalized === "design/source" || normalized.startsWith("design/source/")) return true;
+  if (ignoredFiles.has(normalized)) return true;
+  if (isDirectory) return false;
+  if ([".DS_Store", "Thumbs.db", "server.json"].includes(name)) return true;
+  if (name === ".env.example") return false;
+  if (name === ".env" || name === ".env.local" || name.startsWith(".env.")) return true;
+  return name.endsWith(".swp") || name.endsWith(".log") || name.endsWith(".zip") || name.endsWith(".zip.sha256");
+}
+
 function verifySha256Manifest(baseDir, manifestPath) {
   const normalizedBase = resolve(baseDir);
+  const normalizedManifest = resolve(manifestPath);
   const lines = readFileSync(manifestPath, "utf8").trim().split(/\r?\n/);
   assert(lines.length > 0, `${manifestPath} is empty`);
+  const listedPaths = [];
   for (const line of lines) {
     const match = line.match(/^([a-f0-9]{64}) {2}(.+)$/);
     assert(match, `${manifestPath} contains an invalid entry: ${line}`);
+    listedPaths.push(match[2]);
     const absolute = resolve(normalizedBase, match[2]);
     assert(
       absolute.startsWith(`${normalizedBase}${sep}`),
@@ -50,6 +74,32 @@ function verifySha256Manifest(baseDir, manifestPath) {
     const actual = createHash("sha256").update(readFileSync(absolute)).digest("hex");
     assert(actual === match[1], `SHA-256 mismatch for ${match[2]}`);
   }
+
+  assert(new Set(listedPaths).size === listedPaths.length, `${manifestPath} contains duplicate paths`);
+
+  const packagedPaths = [];
+  function walk(directory) {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const absolute = join(directory, entry.name);
+      const relative = absolute.slice(normalizedBase.length + 1);
+      if (isPackagingIgnored(relative, entry.isDirectory())) continue;
+      if (entry.isDirectory()) {
+        walk(absolute);
+      } else if (resolve(absolute) !== normalizedManifest) {
+        packagedPaths.push(relative.split(sep).join("/"));
+      }
+    }
+  }
+  walk(normalizedBase);
+
+  const expected = packagedPaths.sort();
+  const listed = [...listedPaths].sort();
+  const expectedSet = new Set(expected);
+  const listedSet = new Set(listed);
+  const unlisted = expected.filter((path) => !listedSet.has(path));
+  const missing = listed.filter((path) => !expectedSet.has(path));
+  assert(unlisted.length === 0, `${manifestPath} omits packaged files: ${unlisted.join(", ")}`);
+  assert(missing.length === 0, `${manifestPath} lists missing files: ${missing.join(", ")}`);
   return lines.length;
 }
 

@@ -1,6 +1,6 @@
 # Needlewhile / 扎会儿 · Ver.0.2
 
-An opt-in local waiting game for AI agent sessions, and Game 01 in the early-access [Jieya](../../README.md) collection.
+An opt-in local waiting game for AI agent sessions, and Game 01 in the early-access [Coder Massage / coder马杀鸡](../../README.md) collection. The repository and marketplace keep the compatibility ID `jieya`.
 
 ![Needlewhile Ver.0.2](./design/preview.png)
 
@@ -41,7 +41,7 @@ npm run shutdown
 
 ## Installation
 
-Use the root [human and AI-assistant installation guide](../../README.md#installation-responsibilities) as the canonical runbook. It covers public and authenticated private downloads, ZIP installs, owner-only Hook approval, exit codes, verification, restart, first-run testing, upgrades, Windows, and Claude Code.
+Use the root [human and AI-assistant installation guide](../../docs/INSTALLATION.md#installation-responsibilities) as the canonical runbook. It covers public and authenticated private downloads, ZIP installs, owner-only Hook approval, exit codes, verification, restart, first-run testing, upgrades, Windows, and Claude Code.
 
 Node.js 18+ and a `codex` command on `PATH` are required for Codex installation. No `npm install` or build step is needed.
 
