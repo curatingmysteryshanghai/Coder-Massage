@@ -88,10 +88,10 @@ See [`CLIENT_ADAPTERS.md`](./CLIENT_ADAPTERS.md) for the generic WorkBuddy/Coze-
 ## Version map
 
 - Experience label: `Ver.0.2`
-- Plugin/runtime package: `0.4.6`
+- Plugin/runtime package: `0.4.7`
 - Lifecycle protocol: `2`
 
-Runtime 0.4.6 keeps the compact pixel-art Portal looping, preserves one shared task clock from prompt submission through browser entry and completion, and refines front-face needle perspective. The click invokes an app-only local launch tool instead of sending a dynamic loopback URL through Codex's external-link bridge. Runtime snapshots remain upgrade-safe, and installation remains gated on all three trusted Hooks.
+Runtime 0.4.7 keeps the compact pixel-art Portal looping and preserves one shared task clock from prompt submission through browser entry and completion. The app-only click tool now forces a new visible default-browser instance on macOS and reports launch success only after the launcher exits cleanly. Runtime snapshots remain upgrade-safe, and installation remains gated on all three trusted Hooks.
 
 See [`design-qa.md`](./design-qa.md) for visual and interaction evidence and [`PACKAGE_INFO.md`](./PACKAGE_INFO.md) for the tested boundary.
 

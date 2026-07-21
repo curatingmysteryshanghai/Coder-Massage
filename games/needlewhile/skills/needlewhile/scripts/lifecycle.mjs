@@ -11,13 +11,23 @@ const defaultStateDir = join(tmpdir(), `needlewhile-${String(identity).replace(/
 const STATE_DIR = process.env.NEEDLEWHILE_STATE_DIR || defaultStateDir;
 const STATE_FILE = join(STATE_DIR, "server.json");
 const START_LOCK = join(STATE_DIR, "starting.lock");
-const VERSION = "0.4.6";
+const VERSION = "0.4.7";
 const PROTOCOL_VERSION = 2;
 const verbose = process.argv.includes("--verbose");
 const noWindow = process.argv.includes("--no-window") || process.env.NEEDLEWHILE_NO_WINDOW === "1";
-const testBrowserLauncher = process.env.NEEDLEWHILE_SELF_TEST === "1"
+const selfTest = process.env.NEEDLEWHILE_SELF_TEST === "1";
+const testBrowserLauncher = selfTest
   ? process.env.NEEDLEWHILE_TEST_BROWSER_LAUNCHER
   : null;
+const runtimePlatform = selfTest && process.env.NEEDLEWHILE_TEST_PLATFORM
+  ? process.env.NEEDLEWHILE_TEST_PLATFORM
+  : process.platform;
+const testLaunchTimeoutMs = selfTest
+  ? Number.parseInt(process.env.NEEDLEWHILE_TEST_LAUNCH_TIMEOUT_MS ?? "", 10)
+  : Number.NaN;
+const BROWSER_LAUNCH_TIMEOUT_MS = Number.isInteger(testLaunchTimeoutMs) && testLaunchTimeoutMs > 0
+  ? testLaunchTimeoutMs
+  : 8_000;
 const inlinePortal = process.argv.includes("--inline-portal");
 const INLINE_PORTAL_CONTEXT = [
   "Needlewhile's trusted top-level task-start hook is active.",
@@ -211,7 +221,7 @@ async function sendControl(state, payload) {
   }
 }
 
-function detach(command, args) {
+function launchAndWait(command, args) {
   return new Promise((resolve) => {
     let child;
     try {
@@ -222,26 +232,41 @@ function detach(command, args) {
     }
 
     let settled = false;
+    let timer;
     const finish = (opened) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       resolve(opened);
     };
     child.once("error", () => finish(false));
-    child.once("spawn", () => {
+    child.once("close", (code) => finish(code === 0));
+    timer = setTimeout(() => {
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        // The launcher may have exited between the timeout and this cleanup.
+      }
       child.unref();
-      finish(true);
-    });
+      finish(false);
+    }, BROWSER_LAUNCH_TIMEOUT_MS);
   });
+}
+
+function browserLaunch(url) {
+  if (runtimePlatform === "darwin") return { command: "/usr/bin/open", args: ["-n", url] };
+  if (runtimePlatform === "win32") return { command: "cmd", args: ["/c", "start", "", url] };
+  return { command: "xdg-open", args: [url] };
 }
 
 async function openPortal(state) {
   const url = `http://127.0.0.1:${state.port}/#${state.token}`;
   if (noWindow) return true;
-  if (testBrowserLauncher) return await detach(process.execPath, [testBrowserLauncher, url]);
-  if (process.platform === "darwin") return await detach("open", [url]);
-  if (process.platform === "win32") return await detach("cmd", ["/c", "start", "", url]);
-  return await detach("xdg-open", [url]);
+  const launch = browserLaunch(url);
+  if (testBrowserLauncher) {
+    return await launchAndWait(process.execPath, [testBrowserLauncher, launch.command, ...launch.args]);
+  }
+  return await launchAndWait(launch.command, launch.args);
 }
 
 function hookOutput(additionalContext = null) {
