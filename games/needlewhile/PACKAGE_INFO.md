@@ -1,9 +1,9 @@
 # Needlewhile / 扎会儿 — Package Info
 
 - Collection design release: Ver.0.2
-- Plugin/runtime version: 0.4.6
+- Plugin/runtime version: 0.4.7
 - Lifecycle protocol: 2
-- Build date: 2026-07-20
+- Build date: 2026-07-21
 - Runtime: Node.js 18+
 - Native plugin targets: Codex and Claude Code
 - Adapter targets: any local client that can run start/heartbeat/stop commands, including WorkBuddy- or Coze-hosted local runners
@@ -31,7 +31,7 @@
 
 The shared runtime is validated with Codex-shaped, Claude-shaped, WorkBuddy-shaped, and Coze-shaped lifecycle fixtures. Native hook packaging is supplied for Codex and Claude Code. Other clients use the documented command adapter when their local desktop or runner exposes lifecycle hooks; cloud-only sessions cannot reach a loopback browser UI.
 
-A fresh Codex installation was exercised from a clean clone with isolated `HOME`, `CODEX_HOME`, and runtime state on macOS using Node.js 22 and Codex CLI 0.145.0-alpha.18. The plugin was copied into the Codex cache, registered as `needlewhile@jieya`, enabled, and surfaced all three Hooks as authorization-pending. The app adapter self-test proves that browser launch occurs only after the Portal click tool. Windows PowerShell paths and installer invariants are covered by static validation; native Windows execution still needs a Windows test machine.
+A fresh Codex installation was exercised from a clean clone with isolated `HOME`, `CODEX_HOME`, and runtime state on macOS using Node.js 22 and Codex CLI 0.145.0-alpha.18. The plugin was copied into the Codex cache, registered as `needlewhile@jieya`, enabled, and surfaced all three Hooks as authorization-pending. The app adapter self-test proves that browser launch occurs only after the Portal click tool. Launcher tests additionally verify `/usr/bin/open -n` on macOS, non-zero exit handling, and the retained Windows/Linux commands. Windows PowerShell paths and installer invariants are covered by static validation; native Windows execution still needs a Windows test machine.
 
 The source can be downloaded directly while the GitHub repository is public; private periods require explicit repository access and authentication. Run `sh ./install.sh --codex` on macOS/Linux or `.\install.ps1 -Target codex` in Windows PowerShell. Keep the clone or extracted folder at a stable path because Codex records it as the local marketplace source for diagnostics and updates.
 
@@ -43,4 +43,4 @@ After Hook review, run `sh ./install.sh --verify` or `.\install.ps1 -Target veri
 
 Task labels are sanitized, capped at 88 characters, kept only in controller memory, and never written to the state file. The raw prompt is never persisted. The Portal binds only to `127.0.0.1`, uses a random token, makes no remote requests, and never captures global keys. `Escape` and `F11` remain browser controls.
 
-An explicit `open` command asks the operating system to open a normal URL in the current default browser. It does not select Chrome, create a browser profile, launch app/full-screen mode, maximize a window, or change browser settings.
+An explicit `open` command asks the operating system to open a normal URL in the current default browser. On macOS it uses `/usr/bin/open -n` so a background browser process with no windows cannot swallow the request. The launcher must exit successfully before Needlewhile reports the open as successful. It does not select Chrome, create a browser profile, launch app/full-screen mode, maximize a window, or change browser settings.

@@ -160,7 +160,7 @@ For Claude Code, update the same stable checkout, run `sh ./install.sh --claude`
 
 ## Troubleshooting an older pinned marketplace
 
-If installation reports a version mismatch after refreshing—for example, `expected 0.4.6, found 0.4.5`—the existing `jieya` Git marketplace may still be pinned to an old PR branch. Confirm the repository URL is exactly `magicfanshanghai-sys/jieya`, then rebuild only that marketplace snapshot on `main`:
+If installation reports a version mismatch after refreshing—for example, `expected 0.4.7, found 0.4.6`—the existing `jieya` Git marketplace may still be pinned to an old PR branch. Confirm the repository URL is exactly `magicfanshanghai-sys/jieya`, then rebuild only that marketplace snapshot on `main`:
 
 ```bash
 codex plugin marketplace remove jieya --json
@@ -232,7 +232,7 @@ Replace `workbuddy` with `coze` or another stable client name and keep stable se
 
 - Coder Massage collection information architecture: **0.3.0**
 - Needlewhile experience/design label: **Ver.0.2**
-- Needlewhile plugin/runtime: **0.4.6** (infinite-loop inline Portal, shared task clock, refined needle perspective, and verified three-Hook install handoff)
+- Needlewhile plugin/runtime: **0.4.7** (visible macOS browser launch, verified launcher exit status, infinite-loop inline Portal, shared task clock, and verified three-Hook install handoff)
 - Lifecycle protocol: **2**
 
 ## Repository layout

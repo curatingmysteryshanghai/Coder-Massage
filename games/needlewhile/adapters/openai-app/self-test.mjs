@@ -293,8 +293,8 @@ const stateDir = join(testRoot, "state");
 const browserMarker = join(testRoot, "browser-launched.txt");
 const testBrowserLauncher = join(testRoot, "browser-launcher.mjs");
 const snapshotBase = join(testRoot, "runtime-snapshots");
-const stagedPluginRoot = join(testRoot, "cache", "needlewhile", "0.4.6");
-const stagedBackupRoot = join(testRoot, "cache", "plugin-backup", "needlewhile", "0.4.6");
+const stagedPluginRoot = join(testRoot, "cache", "needlewhile", "0.4.7");
+const stagedBackupRoot = join(testRoot, "cache", "plugin-backup", "needlewhile", "0.4.7");
 await mkdir(stateDir, { recursive: true });
 await mkdir(dirname(stagedBackupRoot), { recursive: true });
 await cp(ADAPTER_DIR, join(stagedPluginRoot, "adapters", "openai-app"), { recursive: true });
@@ -304,7 +304,7 @@ await appendFile(stagedLifecycle, "\n// needlewhile-self-test-staged-runtime\n")
 
 await writeFile(
   testBrowserLauncher,
-  `import { writeFile } from "node:fs/promises";\nawait writeFile(${JSON.stringify(browserMarker)}, process.argv[2] ?? "");\n`,
+  `import { writeFile } from "node:fs/promises";\nawait writeFile(${JSON.stringify(browserMarker)}, JSON.stringify(process.argv.slice(2)));\n`,
 );
 
 const child = spawn(process.execPath, [join(stagedPluginRoot, "adapters", "openai-app", "server.mjs")], {
@@ -624,7 +624,7 @@ try {
   assert.equal(opened.result._meta.launched, true);
   assert.equal(opened.result._meta.launchMode, "system-default-browser");
   assert.equal(await waitForMarker(), true, "the explicit Portal click tool did not launch the browser");
-  const launchedHref = (await readFile(browserMarker, "utf8")).trim();
+  const launchedHref = JSON.parse(await readFile(browserMarker, "utf8")).at(-1);
   assert.equal(launchedHref, called.result._meta.portalHref, "the click tool launched a different controller URL");
 
   const gameState = await readTaskState(launchedHref);

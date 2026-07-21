@@ -15,7 +15,8 @@ const OPENAI_ADAPTER_SERVER = join(OPENAI_ADAPTER_DIR, "server.mjs");
 const OPENAI_ADAPTER_TEST = join(OPENAI_ADAPTER_DIR, "self-test.mjs");
 const CODEX_HOOK_DOCTOR = join(ROOT, "scripts", "codex-hook-doctor.mjs");
 const CODEX_HOOK_DOCTOR_TEST = join(ROOT, "scripts", "codex-hook-doctor.test.mjs");
-const EXPECTED_RUNTIME_VERSION = "0.4.6";
+const LIFECYCLE_OPEN_TEST = join(ROOT, "scripts", "lifecycle-open.test.mjs");
+const EXPECTED_RUNTIME_VERSION = "0.4.7";
 const EXPECTED_DESIGN_VERSION = "Ver. 0.2";
 const EXPECTED_PROTOCOL_VERSION = 2;
 const STATE_DIR = mkdtempSync(join(tmpdir(), "needlewhile-validate-"));
@@ -193,7 +194,7 @@ try {
   assert(codexMarketplace.name === "jieya", "standalone Codex marketplace name mismatch");
   assert(codexMarketplace.plugins?.[0]?.name === "needlewhile", "standalone Codex plugin name mismatch");
   assert(codexMarketplace.plugins?.[0]?.source?.path === "./", "standalone Codex marketplace path mismatch");
-  pass("runtime 0.4.6, design Ver. 0.2, and protocol 2 align across release manifests");
+  pass("runtime 0.4.7, design Ver. 0.2, and protocol 2 align across release manifests");
 
   const codexEvents = Object.keys(codexHooks.hooks);
   const supportedCodexEvents = new Set([
@@ -263,11 +264,20 @@ try {
     OPENAI_ADAPTER_TEST,
     CODEX_HOOK_DOCTOR,
     CODEX_HOOK_DOCTOR_TEST,
+    LIFECYCLE_OPEN_TEST,
   ]) {
     const result = spawnSync(process.execPath, ["--check", file], { encoding: "utf8" });
     assert(result.status === 0, `${file} failed syntax check: ${result.stderr}`);
   }
   pass("runtime, browser client, audio engine, Hook doctor, and OpenAI MCP App adapter pass Node syntax checks");
+
+  const launcherTests = spawnSync(process.execPath, ["--test", LIFECYCLE_OPEN_TEST], {
+    cwd: ROOT,
+    encoding: "utf8",
+    timeout: 15_000,
+  });
+  assert(launcherTests.status === 0, `browser launcher tests failed: ${launcherTests.stderr || launcherTests.stdout}`);
+  pass("browser launcher waits for exit status, forces a new macOS instance, and preserves Windows/Linux commands");
 
   const hookDoctorSource = read("scripts/codex-hook-doctor.mjs").toString("utf8");
   assert(hookDoctorSource.includes('method: "hooks/list"'), "Hook doctor does not inspect hooks/list");
@@ -398,20 +408,6 @@ try {
   assert(status.displayVersion === EXPECTED_DESIGN_VERSION, "live design version mismatch");
   assert(status.protocolVersion === EXPECTED_PROTOCOL_VERSION, "live protocol version mismatch");
   pass("explicit open is safe under --no-window and live version metadata aligns");
-
-  const missingLauncher = spawnSync(process.execPath, [LIFECYCLE, "open", "--verbose"], {
-    encoding: "utf8",
-    env: {
-      ...fixtureEnv,
-      NEEDLEWHILE_NO_WINDOW: "0",
-      PATH: join(STATE_DIR, "missing-launcher-bin"),
-    },
-    input: "{}",
-    timeout: 5_000,
-  });
-  assert(missingLauncher.status !== 0, "missing system browser launcher was reported as success");
-  assert(missingLauncher.stderr.includes("open: failed"), "missing launcher failure was not diagnosed");
-  pass("system-browser launch waits for spawn and reports a missing launcher as failure");
 
   const subagentPortalStart = runLifecycle("start", {
     hook_event_name: "UserPromptSubmit",

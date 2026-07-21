@@ -1,10 +1,10 @@
 {
   "name": "needlewhile",
   "displayName": "Needlewhile / 扎会儿",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "designVersion": "Ver. 0.2",
   "protocolVersion": 2,
-  "buildDate": "2026-07-20",
+  "buildDate": "2026-07-21",
   "runtime": {
     "node": ">=18",
     "browserLaunch": "explicit opt-in only",
